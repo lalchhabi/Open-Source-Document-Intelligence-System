@@ -21,12 +21,14 @@ if __name__ == "__main__":
     store.add(embeddings, texts, metadata)
 
     # Query
-    query = "What is the leave policy for contract employees?"
+    query = "Who is the Muhammad Ghilam Jillani?"
     query_embedding = embedder.embed_texts([query])[0]
-    results = store.search(query_embedding)
+    results = store.search(query_embedding, top_k=3)
 
-    print("\n Top Retrieved Chunks: \n")
-    for r in results:
-        print(r['text'][:300])
-        print("Metadata:", r['metadata'])
-        print("-----"*30)
+    print("\n🔍 Top 3 Retrieved Chunks:\n")
+
+    for i, r in enumerate(results, start=1):
+        print(f"--- Result {i} ---")
+        print(r["text"][:400])   # limit text length
+        print("Metadata:", r["metadata"])
+        print()
