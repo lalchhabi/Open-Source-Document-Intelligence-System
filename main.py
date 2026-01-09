@@ -2,6 +2,7 @@ from ingestion.loader import pdf_loader
 from chunking.chunker import chunk_documents
 from embeddings.embedder import Embedder
 from embeddings.vector_store import *
+from retriever.retriever import Retriever
 
 
 
@@ -20,10 +21,12 @@ if __name__ == "__main__":
     store = FAISSStore(embedding_dim=len(embeddings[0]))
     store.add(embeddings, texts, metadata)
 
+    # Create retriever
+    retriever = Retriever(embedder, store)
+
     # Query
     query = "Who is the Muhammad Ghilam Jillani?"
-    query_embedding = embedder.embed_texts([query])[0]
-    results = store.search(query_embedding, top_k=3)
+    results = retriever.retrieve_chunks(query, top_k=3)
 
     print("\n🔍 Top 3 Retrieved Chunks:\n")
 
