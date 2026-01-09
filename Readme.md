@@ -63,9 +63,11 @@ Embedding Generation
    ↓
 Vector Database (FAISS)
    ↓
-Retriever
+Custom Retriever
    ↓
-LLM (Open-Source)
+Prompt Builder
+   ↓
+LLM (HuggingFace)
    ↓
 Answer Generation
    ↓
@@ -104,8 +106,9 @@ UI / API
 * HuggingFace Inference API / Ollama
 
 ### RAG Framework
+* Custom RAG pipeline (framework-light)
+* Selective use of LangChain utilities (text splitting)
 
-* LangChain
 
 ### Evaluation
 
