@@ -1,7 +1,7 @@
 from ingestion.loader import pdf_loader
 from chunking.chunker import chunk_documents
 from embeddings.embedder import Embedder
-from vectorstore.faiss_store import FAISSStore
+from embeddings.vector_store import *
 
 
 
