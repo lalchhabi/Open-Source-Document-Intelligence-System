@@ -3,7 +3,7 @@ from chunking.chunker import chunk_documents
 from embeddings.embedder import Embedder
 from embeddings.vector_store import *
 from retriever.retriever import Retriever
-
+from pipelines.rag_pipelines import RAGPipeline
 
 
 if __name__ == "__main__":
@@ -25,13 +25,13 @@ if __name__ == "__main__":
     retriever = Retriever(embedder, store)
 
     # Query
-    query = "Who is the Muhammad Ghilam Jillani?"
-    results = retriever.retrieve_chunks(query, top_k=3)
+    query = "Leave policy of the Employeee"
 
-    print("\n🔍 Top 3 Retrieved Chunks:\n")
+    # Create RAG Pipeline object
+    rag = RAGPipeline(retriever)
+    
+    answer, sources = rag.run(
+        "Who is Muhammad Ghilam Jillani"
+    )
 
-    for i, r in enumerate(results, start=1):
-        print(f"--- Result {i} ---")
-        print(r["text"][:400])   # limit text length
-        print("Metadata:", r["metadata"])
-        print()
+    print(f"Answer: {answer}")

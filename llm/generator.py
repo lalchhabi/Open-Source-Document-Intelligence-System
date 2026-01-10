@@ -1,7 +1,7 @@
 from llm.hf_model import *
 import torch 
 
-def generate_answer(prompt, max_tokens = 300):
+def generate_answer(prompt, tokenizer, model, max_tokens = 300):
     inputs  = tokenizer(prompt, return_tensors = "pt").to(model.device)
 
     with torch.no_grad():
@@ -13,7 +13,7 @@ def generate_answer(prompt, max_tokens = 300):
             do_sample = True
         )
 
-    answer = tokens.decode(
+    answer = tokenizer.decode(
         outputs[0], skip_special_tokens = True
     )
     return answer

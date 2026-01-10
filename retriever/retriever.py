@@ -10,10 +10,10 @@ class Retriever:
         """
         Embed the query and retrieve top-k relevant chunks
         """
-        query_embeddings = self.embedder.embed_texts([query])[0]
+        query_embedding = self.embedder.embed_texts([query])[0]
 
         results = self.vector_store.search(
-            query_embeddings = query_embeddings,
-            top_k = top_k
+            query_embedding,
+            top_k
         )
         return results
