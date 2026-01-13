@@ -25,7 +25,7 @@ if __name__ == "__main__":
     retriever = Retriever(embedder, store)
 
     # Query
-    query = "Recruitment and selection process of the company?"
+    query = "Based on the context, summarize who Muhammad Ghulam Jillani is, including his role, experience, and key achievements."
 
     # Create RAG Pipeline object
     rag = RAGPipeline(retriever)

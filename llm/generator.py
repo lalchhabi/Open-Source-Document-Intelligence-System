@@ -13,7 +13,8 @@ def generate_answer(prompt, tokenizer, model, max_tokens = 300):
             do_sample = True
         )
 
-    answer = tokenizer.decode(
+    generated_text = tokenizer.decode(
         outputs[0], skip_special_tokens = True
     )
+    answer = generated_text[len(prompt):].strip()
     return answer

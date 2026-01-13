@@ -16,5 +16,4 @@ def build_prompt(retrieved_chunks, query):
 
     Answer:"""
 
-    print(f"Final prompt {prompt}")
     return prompt
