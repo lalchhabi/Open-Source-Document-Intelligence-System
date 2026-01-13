@@ -25,13 +25,13 @@ if __name__ == "__main__":
     retriever = Retriever(embedder, store)
 
     # Query
-    query = "Leave policy of the Employeee"
+    query = "Recruitment and selection process of the company?"
 
     # Create RAG Pipeline object
     rag = RAGPipeline(retriever)
     
     answer, sources = rag.run(
-        "Who is Muhammad Ghilam Jillani"
+        query
     )
 
     print(f"Answer: {answer}")

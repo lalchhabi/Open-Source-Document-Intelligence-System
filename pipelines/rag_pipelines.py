@@ -1,7 +1,6 @@
 from llm.hf_model import load_model
 from llm.prompt_build import build_prompt
 from llm.generator import generate_answer
-from retriever.retriever import Retriever
 
 
 class RAGPipeline():
