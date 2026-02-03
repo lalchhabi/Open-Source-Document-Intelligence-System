@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>RAG PDF QA</title>
+</head>
+<body>
+
+<h2>📄 RAG PDF Question Answering</h2>
+
+<form method="POST" enctype="multipart/form-data">
+    <p>Upload PDF:</p>
+    <input type="file" name="pdf">
+    <button type="submit">Upload</button>
+</form>
+
+<hr>
+
+<form method="POST">
+    <p>Ask Question:</p>
+    <input type="text" name="query" style="width:300px;">
+    <button type="submit">Ask</button>
+</form>
+
+{% if answer %}
+    <h3>✅ Answer:</h3>
+    <p>{{ answer }}</p>
+{% endif %}
+
+{% if sources %}
+    <h3>📚 Sources:</h3>
+    {% for s in sources %}
+        <p><b>Page:</b> {{ s.metadata.page }}</p>
+        <p>{{ s.text[:300] }}</p>
+        <hr>
+    {% endfor %}
+{% endif %}
+
+</body>
+</html>

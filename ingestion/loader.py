@@ -1,28 +1,37 @@
 import os
 from pypdf import PdfReader
+import fitz  
 
+def pdf_loader(path):
 
-def pdf_loader(folder_path):
-    """
-    Loads the pdf file and save in structured format
-    """
-    documents = []
-    for filename in os.listdir(folder_path):
-        if filename.endswith(".pdf"):
-            file_path = os.path.join(folder_path,filename)
-            reader = PdfReader(file_path)
-            for page_number, page in enumerate(reader.pages):
-                text = page.extract_text()
+    docs = []
 
-                if text:
-                    documents.append({
-                        "text":text,
-                        "metadata":{
-                            "source": filename,
-                            "page":page_number + 1
-                        }
-                    })
-    return documents
+    # If single file
+    if path.endswith(".pdf"):
+        pdf_files = [path]
+    else:
+        pdf_files = [
+            os.path.join(path, f)
+            for f in os.listdir(path)
+            if f.endswith(".pdf")
+        ]
+
+    for pdf_path in pdf_files:
+        doc = fitz.open(pdf_path)
+
+        for page_num, page in enumerate(doc):
+            text = page.get_text()
+
+            docs.append({
+                "text": text,
+                "metadata": {
+                    "source": pdf_path,
+                    "page": page_num + 1
+                }
+            })
+
+    return docs
+
 
 
 if __name__ == "__main__":

@@ -25,7 +25,7 @@ if __name__ == "__main__":
     retriever = Retriever(embedder, store)
 
     # Query
-    query = "Based on the contract paper what is the working hours and Salary of the employee."
+    query = "Based on the contract paper can you tell the employee name."
 
     # Create RAG Pipeline object
     rag = RAGPipeline(retriever)
