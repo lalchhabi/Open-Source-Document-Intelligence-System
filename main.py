@@ -22,7 +22,10 @@ if __name__ == "__main__":
     store.add(embeddings, texts, metadata)
 
     # Create retriever
-    retriever = Retriever(embedder, store)
+    retriever = Retriever(
+    embedder=embedder,
+    vector_store=store)
+
 
     # Query
     query = "Based on the contract paper can you tell the employee name."

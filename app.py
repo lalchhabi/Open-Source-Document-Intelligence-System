@@ -21,30 +21,45 @@ def index():
 
     answer = None
     sources = []
+    message = None  
 
     if request.method == "POST":
 
         # Upload PDF
-        if "pdf" in request.files:
-            file = request.files["pdf"]
-            path = "temp.pdf"
-            file.save(path)
+        if "pdf" in request.files and request.files["pdf"].filename != "":
+            try:
+                file = request.files["pdf"]
 
-            # Build pipeline
-            docs = pdf_loader(path)
-            chunks = chunk_documents(docs)
+                os.makedirs("uploads", exist_ok=True)
+                path = os.path.join("uploads", file.filename)
+                file.save(path)
 
-            texts = [c["text"] for c in chunks]
-            metadata = [c["metadata"] for c in chunks]
+                message = "✅ PDF uploaded and processing..."
 
-            embedder = Embedder()
-            embeddings = embedder.embed_texts(texts)
+                # Build pipeline
+                docs = pdf_loader(path)
+                chunks = chunk_documents(docs)
 
-            store = FAISSStore(len(embeddings[0]))
-            store.add(embeddings, texts, metadata)
+                texts = [c["text"] for c in chunks]
+                metadata = [c["metadata"] for c in chunks]
 
-            retriever = Retriever(store, embedder)
-            rag_pipeline = RAGPipeline(retriever)
+                embedder = Embedder()
+                embeddings = embedder.embed_texts(texts)
+
+                store = FAISSStore(len(embeddings[0]))
+                store.add(embeddings, texts, metadata)
+
+                retriever = Retriever(
+                    embedder=embedder,
+                    vector_store=store
+                )
+
+                rag_pipeline = RAGPipeline(retriever)
+
+                message = "✅ Document processed successfully!"
+
+            except Exception as e:
+                message = f"❌ Error: {str(e)}"
 
         # Ask question
         if "query" in request.form and rag_pipeline:
@@ -54,9 +69,9 @@ def index():
     return render_template(
         "index.html",
         answer=answer,
-        sources=sources
+        sources=sources,
+        message=message   
     )
-
 
 if __name__ == "__main__":
     app.run(debug=True)
