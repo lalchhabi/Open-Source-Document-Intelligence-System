@@ -1,0 +1,146 @@
+/* ---------- GLOBAL ---------- */
+body {
+    font-family: 'Segoe UI', sans-serif;
+    background: linear-gradient(135deg, #f0f4f8, #dbeafe);
+    margin: 0;
+}
+
+.main {
+    max-width: 900px;
+    margin: 40px auto;
+    padding: 10px;
+}
+
+/* ---------- HEADERS ---------- */
+h1 {
+    text-align: center;
+    color: #0f172a;
+    font-size: 32px;
+}
+
+.subtitle {
+    text-align: center;
+    color: #475569;
+    margin-bottom: 30px;
+}
+
+/* ---------- CARDS ---------- */
+.card {
+    background: rgba(255,255,255,0.85);
+    backdrop-filter: blur(10px);
+    padding: 22px;
+    border-radius: 14px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.06);
+    margin-bottom: 25px;
+    transition: 0.3s;
+}
+
+.card:hover {
+    transform: translateY(-3px);
+}
+
+/* ---------- INPUTS ---------- */
+input[type="file"],
+input[type="text"] {
+    width: 100%;
+    padding: 14px;
+    border-radius: 10px;
+    border: 1px solid #cbd5f5;
+    margin-top: 12px;
+    font-size: 14px;
+    outline: none;
+    transition: 0.2s;
+}
+
+input:focus {
+    border-color: #2563eb;
+    box-shadow: 0 0 6px rgba(37,99,235,0.3);
+}
+
+/* ---------- BUTTON ---------- */
+button {
+    margin-top: 15px;
+    padding: 14px;
+    width: 100%;
+    border: none;
+    border-radius: 10px;
+    background: linear-gradient(90deg, #2563eb, #3b82f6);
+    color: white;
+    font-size: 15px;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+button:hover {
+    transform: scale(1.03);
+    background: linear-gradient(90deg, #1d4ed8, #2563eb);
+}
+
+/* ---------- ALERT ---------- */
+.alert {
+    background: #dcfce7;
+    color: #166534;
+    padding: 14px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    font-weight: 500;
+}
+
+/* ---------- CHAT ---------- */
+.chat {
+    margin-top: 20px;
+    animation: fadeIn 0.4s ease-in-out;
+}
+
+.user-msg {
+    background: #dbeafe;
+    padding: 14px;
+    border-radius: 12px;
+    margin-bottom: 10px;
+}
+
+.bot-msg {
+    background: #f1f5f9;
+    padding: 14px;
+    border-radius: 12px;
+}
+
+/* ---------- SOURCES ---------- */
+.source {
+    background: #f8fafc;
+    padding: 14px;
+    border-left: 5px solid #2563eb;
+    border-radius: 8px;
+    margin-top: 12px;
+}
+
+/* ---------- PROGRESS BAR ---------- */
+.progress-container {
+    width: 100%;
+    background: #e5e7eb;
+    border-radius: 10px;
+    margin-top: 18px;
+    display: none;
+    overflow: hidden;
+}
+
+.progress-bar {
+    height: 14px;
+    width: 0%;
+    background: linear-gradient(90deg,#2563eb,#60a5fa);
+    border-radius: 10px;
+    transition: width 0.4s;
+}
+
+/* ---------- STATUS TEXT ---------- */
+#status {
+    margin-top: 12px;
+    font-weight: 600;
+    color: #1e293b;
+}
+
+/* ---------- ANIMATIONS ---------- */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px);}
+    to { opacity: 1; transform: translateY(0);}
+}

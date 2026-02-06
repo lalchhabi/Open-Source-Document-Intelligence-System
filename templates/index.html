@@ -1,42 +1,115 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>RAG PDF QA</title>
+    <title>Document Intelligence RAG</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
+
 <body>
 
-<h2>📄 RAG PDF Question Answering</h2>
-{% if message %}
-    <p style="color: green;"><b>{{ message }}</b></p>
-{% endif %}
+<div class="main">
 
-<form method="POST" enctype="multipart/form-data">
-    <p>Upload PDF:</p>
-    <input type="file" name="pdf">
-    <button type="submit">Upload</button>
-</form>
+    <h1>📄 Document Intelligence RAG</h1>
+    <p class="subtitle">Ask questions about your PDF using AI</p>
 
-<hr>
+    <div class="card">
+        <h3>Upload Document</h3>
 
-<form method="POST">
-    <p>Ask Question:</p>
-    <input type="text" name="query" style="width:300px;">
-    <button type="submit">Ask</button>
-</form>
+        <form id="uploadForm" enctype="multipart/form-data">
+            <input type="file" name="pdf" id="pdfFile" required>
+            <button type="submit">Upload PDF</button>
+        </form>
 
-{% if answer %}
-    <h3>✅ Answer:</h3>
-    <p>{{ answer }}</p>
-{% endif %}
+        <div class="progress-container" id="progressContainer">
+            <div class="progress-bar" id="progressBar"></div>
+        </div>
 
-{% if sources %}
-    <h3>📚 Sources:</h3>
-    {% for s in sources %}
-        <p><b>Page:</b> {{ s.metadata.page }}</p>
-        <p>{{ s.text[:300] }}</p>
-        <hr>
-    {% endfor %}
-{% endif %}
+        <p id="status"></p>
+    </div>
+
+    <!-- Query Section -->
+    <div class="card">
+        <h3>Ask a Question</h3>
+
+        <form id="queryForm">
+            <input type="text" id="queryInput" placeholder="Type your question..." required>
+            <button type="submit">Get Answer</button>
+        </form>
+    </div>
+
+    <!-- Chat Area -->
+    <div id="chatArea"></div>
+
+</div>
+
+<script>
+/* ---------------- UPLOAD LOGIC ---------------- */
+const uploadForm = document.getElementById("uploadForm");
+const progressBar = document.getElementById("progressBar");
+const progressContainer = document.getElementById("progressContainer");
+const statusText = document.getElementById("status");
+
+uploadForm.addEventListener("submit", function(e) {
+    e.preventDefault();
+
+    const file = document.getElementById("pdfFile").files[0];
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append("pdf", file);
+
+    const xhr = new XMLHttpRequest();
+    progressContainer.style.display = "block";
+
+    xhr.upload.addEventListener("progress", function(e) {
+        if (e.lengthComputable) {
+            let percent = (e.loaded / e.total) * 100;
+            progressBar.style.width = percent + "%";
+        }
+    });
+
+    xhr.onload = function() {
+        statusText.innerText = "✅ Upload & Processing Complete!";
+    };
+
+    xhr.open("POST", "/upload");
+    xhr.send(formData);
+});
+
+
+/* ---------------- QUERY LOGIC ---------------- */
+const queryForm = document.getElementById("queryForm");
+const chatArea = document.getElementById("chatArea");
+
+queryForm.addEventListener("submit", function(e) {
+    e.preventDefault();
+
+    const query = document.getElementById("queryInput").value;
+
+    if (!query) return;
+
+    // Show user message
+    chatArea.innerHTML += `
+        <div class="chat">
+            <div class="user-msg"><b>You:</b> ${query}</div>
+            <div class="bot-msg" id="loading">Thinking...</div>
+        </div>
+    `;
+
+    fetch("/ask", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({query: query})
+    })
+    .then(res => res.json())
+    .then(data => {
+        document.getElementById("loading").innerHTML =
+            "<b>AI:</b> " + data.answer;
+    });
+
+    queryForm.reset();
+});
+</script>
 
 </body>
 </html>
