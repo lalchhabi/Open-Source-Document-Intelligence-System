@@ -8,19 +8,16 @@ class RAGPipeline():
         self.retriever = retriever
         self.tokenizer, self.model = load_model()
 
-    def run(self, query, top_k = 5):
-        # 1. Retrieve relevant chunks
-        chunks = self.retriever.retrieve_chunks(query,
-                                          top_k = top_k)
-        
-        # 2. Build prompt
+    def run(self, query, top_k=5):
+        print("\n🔍 Retrieving chunks...")
+        chunks = self.retriever.retrieve_chunks(query, top_k)
+
+        print("📄 Building prompt...")
         prompt = build_prompt(chunks, query)
 
-        # 3. Generate Answer
-        answer = generate_answer(
-            prompt,
-            self.tokenizer,
-            self.model
-        )
+        print("🚀 Sending to LLM...")
+        answer = generate_answer(prompt, self.tokenizer, self.model)
+
+        print("✅ Answer generated")
 
         return answer, chunks
