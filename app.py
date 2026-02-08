@@ -97,8 +97,13 @@ def upload():
 
 @app.route("/ask", methods=["POST"])
 def ask():
+    global rag_pipeline
+
     data = request.get_json()
     query = data["query"]
+
+    if not rag_pipeline:
+        return jsonify({"answer": "Please upload a document first."})
 
     answer, sources = rag_pipeline.run(query)
 
@@ -106,6 +111,7 @@ def ask():
         "answer": answer
     })
 
+
 # ===============================
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug=True, use_reloader = False)

@@ -2,6 +2,8 @@
 <html>
 <head>
     <title>Document Intelligence RAG</title>
+
+    <!-- CSS -->
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 
@@ -12,6 +14,7 @@
     <h1>📄 Document Intelligence RAG</h1>
     <p class="subtitle">Ask questions about your PDF using AI</p>
 
+    <!-- ================= UPLOAD SECTION ================= -->
     <div class="card">
         <h3>Upload Document</h3>
 
@@ -20,6 +23,7 @@
             <button type="submit">Upload PDF</button>
         </form>
 
+        <!-- Progress bar -->
         <div class="progress-container" id="progressContainer">
             <div class="progress-bar" id="progressBar"></div>
         </div>
@@ -27,33 +31,36 @@
         <p id="status"></p>
     </div>
 
-    <!-- Query Section -->
+    <!-- ================= QUESTION SECTION ================= -->
     <div class="card">
         <h3>Ask a Question</h3>
 
-        <form id="queryForm">
+        <form id="questionForm">
             <input type="text" id="queryInput" placeholder="Type your question..." required>
             <button type="submit">Get Answer</button>
         </form>
     </div>
 
-    <!-- Chat Area -->
+    <!-- ================= CHAT AREA ================= -->
     <div id="chatArea"></div>
 
 </div>
 
+<!-- ================= JAVASCRIPT ================= -->
 <script>
-/* ---------------- UPLOAD LOGIC ---------------- */
+document.addEventListener("DOMContentLoaded", function(){
+
+/* ---------- UPLOAD LOGIC ---------- */
 const uploadForm = document.getElementById("uploadForm");
 const progressBar = document.getElementById("progressBar");
 const progressContainer = document.getElementById("progressContainer");
 const statusText = document.getElementById("status");
 
-uploadForm.addEventListener("submit", function(e) {
+uploadForm.addEventListener("submit", function(e){
     e.preventDefault();
 
     const file = document.getElementById("pdfFile").files[0];
-    if (!file) return;
+    if(!file) return;
 
     const formData = new FormData();
     formData.append("pdf", file);
@@ -61,14 +68,14 @@ uploadForm.addEventListener("submit", function(e) {
     const xhr = new XMLHttpRequest();
     progressContainer.style.display = "block";
 
-    xhr.upload.addEventListener("progress", function(e) {
-        if (e.lengthComputable) {
+    xhr.upload.addEventListener("progress", function(e){
+        if(e.lengthComputable){
             let percent = (e.loaded / e.total) * 100;
             progressBar.style.width = percent + "%";
         }
     });
 
-    xhr.onload = function() {
+    xhr.onload = function(){
         statusText.innerText = "✅ Upload & Processing Complete!";
     };
 
@@ -77,24 +84,30 @@ uploadForm.addEventListener("submit", function(e) {
 });
 
 
-/* ---------------- QUERY LOGIC ---------------- */
-const queryForm = document.getElementById("queryForm");
+/* ---------- QUESTION LOGIC ---------- */
+const questionForm = document.getElementById("questionForm");
 const chatArea = document.getElementById("chatArea");
 
-queryForm.addEventListener("submit", function(e) {
+questionForm.addEventListener("submit", function(e){
     e.preventDefault();
 
-    const query = document.getElementById("queryInput").value;
+    const queryInput = document.getElementById("queryInput");
+    const query = queryInput.value.trim();
 
-    if (!query) return;
+    if(!query) return;
 
-    // Show user message
+    const msgId = "msg-" + Date.now();
+
+    // Show user + loading
     chatArea.innerHTML += `
         <div class="chat">
             <div class="user-msg"><b>You:</b> ${query}</div>
-            <div class="bot-msg" id="loading">Thinking...</div>
+            <div class="bot-msg" id="${msgId}">🤖 Thinking...</div>
         </div>
     `;
+
+    // Auto scroll
+    window.scrollTo(0, document.body.scrollHeight);
 
     fetch("/ask", {
         method: "POST",
@@ -103,11 +116,19 @@ queryForm.addEventListener("submit", function(e) {
     })
     .then(res => res.json())
     .then(data => {
-        document.getElementById("loading").innerHTML =
+        document.getElementById(msgId).innerHTML =
             "<b>AI:</b> " + data.answer;
+
+        window.scrollTo(0, document.body.scrollHeight);
+    })
+    .catch(err => {
+        document.getElementById(msgId).innerHTML =
+            "❌ Error getting answer.";
     });
 
-    queryForm.reset();
+    queryInput.value = "";
+});
+
 });
 </script>
 
