@@ -1,6 +1,7 @@
 import os
 from pypdf import PdfReader
 import fitz  
+from utils.text_cleaner import text_proprocessing
 
 def pdf_loader(path):
 
@@ -20,10 +21,11 @@ def pdf_loader(path):
         doc = fitz.open(pdf_path)
 
         for page_num, page in enumerate(doc):
-            text = page.get_text()
+            text = page.get_text("text")
+            clean_text = text_proprocessing(text)
 
             docs.append({
-                "text": text,
+                "text": clean_text,
                 "metadata": {
                     "source": pdf_path,
                     "page": page_num + 1
