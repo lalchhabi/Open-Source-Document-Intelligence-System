@@ -12,7 +12,7 @@ class FAISSStore:
         self.texts.extend(texts)
         self.metadata.extend(metadata)
 
-    def search(self, query_embedding, top_k=5):
+    def search(self, query_embedding, top_k=8):  ### top_k -> most relevant number of chunks
         distances, indices = self.index.search(
             np.array([query_embedding]).astype("float32"),
             top_k
