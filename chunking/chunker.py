@@ -2,7 +2,7 @@ import langchain
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 
-def chunk_documents(documents, chunk_size = 400, chunk_overlap = 150):
+def chunk_documents(documents, chunk_size = 900, chunk_overlap = 200):
     """
     Take the extracted documents from the pdf file and divide them into chunks
     """
