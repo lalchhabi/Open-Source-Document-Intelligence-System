@@ -1,6 +1,5 @@
 from flask import Flask, request, render_template, jsonify
 import os
-
 from ingestion.loader import pdf_loader
 from chunking.chunker import chunk_documents
 from embeddings.embedder import Embedder
@@ -15,6 +14,9 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 # Global pipeline
 rag_pipeline = None
+
+# chat memory or history
+chat_history = []
 
 
 # ===============================
@@ -62,6 +64,7 @@ def upload():
     # Save file
     path = os.path.join(UPLOAD_FOLDER, file.filename)
     file.save(path)
+    chat_history.clear()
 
     try:
         print("📄 Loading PDF...")
@@ -97,19 +100,38 @@ def upload():
 
 @app.route("/ask", methods=["POST"])
 def ask():
-    global rag_pipeline
+    global chat_history
 
     data = request.get_json()
     query = data["query"]
 
     if not rag_pipeline:
-        return jsonify({"answer": "Please upload a document first."})
+        return jsonify({"answer": "Upload document first."})
 
-    answer, sources = rag_pipeline.run(query)
+    answer, sources = rag_pipeline.run(
+        query,
+        top_k=5,
+        chat_history=chat_history
+    )
+
+    chat_history.append({
+        "user": query,
+        "assistant": answer
+    })
+
+    del chat_history[:-5]
 
     return jsonify({
-        "answer": answer
+        "answer": answer,
+        "sources": [
+            {
+                "page": s["metadata"]["page"],
+                "text": s["text"][:200]
+            }
+            for s in sources
+        ]
     })
+
 
 
 # ===============================
