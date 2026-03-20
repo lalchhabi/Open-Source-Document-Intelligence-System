@@ -1,260 +1,232 @@
-# 📄 Open-Source Document Intelligence System
+# 📄 Document Intelligence System (RAG-Based)
 
-### Reliable RAG with Open-Source LLMs & Evaluation
-
-## 🔍 Overview
-
-This project implements an **open-source Document Intelligence System** that enables accurate, grounded question answering over unstructured documents using **Retrieval-Augmented Generation (RAG)**.
-
-Unlike prompt-only chatbots, this system focuses on:
-
-* **Reducing hallucinations**
-* **Grounding answers in source documents**
-* **Quantitatively evaluating LLM outputs**
-
-The goal is to build a **reliable, transparent, and extensible RAG pipeline** suitable for real-world document-heavy applications.
+An end-to-end **Retrieval-Augmented Generation (RAG)** system that allows users to upload documents (PDFs) and ask intelligent, context-aware questions using a local LLM.
 
 ---
 
-## 🚩 Problem Statement
+## 🚀 Features
 
-Organizations rely on large volumes of documents such as:
-
-* Policies
-* Contracts
-* Reports
-* Manuals
-* Research papers
-
-Traditional keyword search fails to capture semantic meaning, while LLMs alone tend to hallucinate when knowledge is missing.
-
-**This project addresses the gap by combining retrieval + generation + evaluation** to ensure answers are:
-
-* Relevant
-* Faithful to source documents
-* Measurable in quality
+- 📂 Upload PDF documents
+- ✂️ Smart text chunking with overlap
+- 🧠 Semantic search using embeddings (FAISS)
+- 🤖 LLM-powered answer generation
+- 💬 Context-aware multi-turn conversation
+- 📊 Source-based answers (with page references)
+- 🌐 Clean Flask-based web UI
+- ⚡ Real-time processing with progress bar
 
 ---
 
-## 🧠 Key Features
-
-* 📄 Multi-document ingestion (PDF/Text)
-* ✂️ Configurable document chunking
-* 🧠 Semantic search using vector embeddings
-* 🔗 Retrieval-Augmented Generation (RAG)
-* 📊 LLM output evaluation (faithfulness, relevance)
-* 📚 Source citations for transparency
-* 🧪 Error analysis & iterative improvement
-* 🖥️ Interactive UI (Streamlit)
-* ⚙️ API-first design (FastAPI)
-
----
-
-## 🏗️ System Architecture
+## 🧠 System Architecture
 
 ```
-Documents
-   ↓
-Text Cleaning & Parsing
-   ↓
-Chunking & Metadata
-   ↓
-Embedding Generation
-   ↓
-Vector Database (FAISS)
-   ↓
-Custom Retriever
-   ↓
-Prompt Builder
-   ↓
-LLM (HuggingFace)
-   ↓
-Answer Generation
-   ↓
-Evaluation (RAGAS)
-   ↓
-UI / API
+
+User Query
+↓
+Retriever (FAISS Vector Search)
+↓
+Top-K Relevant Chunks
+↓
+Prompt Builder (Context + Chat History)
+↓
+LLM (Gemma 2B - HuggingFace)
+↓
+Final Answer
+
 ```
 
 ---
 
-## 🛠️ Tech Stack
-
-### Core
-
-* **Python 3.10+**
-
-### Document Processing
-
-* PyMuPDF / pdfplumber
-* LangChain text splitters
-
-### Embeddings
-
-* Sentence-Transformers
-
-  * `all-MiniLM-L6-v2`
-  * `bge-small-en`
-
-### Vector Database
-
-* FAISS
-
-### LLMs (Open-Source)
-
-* Mistral 7B Instruct / Qwen2.5 / Phi-3
-* HuggingFace Inference API / Ollama
-
-### RAG Framework
-* Custom RAG pipeline (framework-light)
-* Selective use of LangChain utilities (text splitting)
-
-
-### Evaluation
-
-* RAGAS
-* Custom metrics
-
-### Backend & UI
-
-* FastAPI
-* Streamlit
-
----
-
-## 📂 Project Structure
+## 🏗️ Project Structure
 
 ```
-document-intelligence-rag/
+
+Document-Intelligence/
 │
-├── data/
-│   ├── raw_docs/
-│   └── processed_docs/
+├── app.py                  # Flask application
 │
 ├── ingestion/
-│   ├── loader.py
-│   └── cleaner.py
+│   └── loader.py          # PDF loading & extraction
 │
 ├── chunking/
-│   └── chunker.py
+│   └── chunker.py         # Text chunking logic
 │
 ├── embeddings/
-│   └── embedder.py
-│
-├── vectorstore/
-│   └── faiss_index.py
+│   ├── embedder.py        # Embedding model
+│   └── vector_store.py    # FAISS vector DB
 │
 ├── retriever/
-│   └── retriever.py
+│   └── retriever.py       # Semantic retrieval
 │
-├── rag/
-│   └── rag_pipeline.py
+├── pipelines/
+│   └── rag_pipelines.py   # RAG pipeline orchestration
 │
-├── evaluation/
-│   ├── ragas_eval.py
-│   └── metrics.py
+├── llm/
+│   ├── hf_model.py        # Model loading
+│   ├── generator.py       # Answer generation
+│   └── prompt_build.py    # Prompt engineering
 │
-├── api/
-│   └── app.py
+├── templates/
+│   └── index.html         # Frontend UI
 │
-├── ui/
-│   └── streamlit_app.py
+├── static/
+│   ├── style.css          # Styling
+│   └── script.js          # Frontend logic
 │
-├── experiments/
-│   └── logs/
-│
-├── README.md
-└── requirements.txt
+└── uploads/               # Uploaded PDFs
+
 ```
 
 ---
 
-## 🚀 How It Works
+## ⚙️ Tech Stack
 
-1. **Ingest Documents**
-   Load and clean PDFs or text files.
-
-2. **Chunk Documents**
-   Split documents into semantically meaningful chunks with overlap.
-
-3. **Generate Embeddings**
-   Convert chunks into vector representations.
-
-4. **Store in Vector Database**
-   Store embeddings in FAISS for fast similarity search.
-
-5. **Retrieve Relevant Context**
-   Retrieve top-k chunks for a user query.
-
-6. **Generate Grounded Answers**
-   LLM answers strictly using retrieved context.
-
-7. **Evaluate Outputs**
-   Measure faithfulness, relevance, and context alignment.
+- **Backend:** Flask  
+- **LLM:** HuggingFace (`google/gemma-2b-it`)  
+- **Embeddings:** SentenceTransformers (`bge-small-en`)  
+- **Vector DB:** FAISS  
+- **Frontend:** HTML, CSS, JavaScript  
+- **PDF Processing:** PyMuPDF (fitz)  
 
 ---
 
-## 📊 Evaluation Strategy
+## 🔄 How It Works
 
-The system uses **RAGAS** to evaluate LLM performance:
+### 1. Document Ingestion
+- Upload PDF
+- Extract text from pages
+- Clean and preprocess text
 
-* **Faithfulness** – Is the answer supported by the retrieved context?
-* **Answer Relevance** – Does the answer address the question?
-* **Context Relevance** – Are retrieved documents useful?
+### 2. Chunking
+- Split text into overlapping chunks
+- Improves retrieval accuracy
 
-Evaluation metrics guide **system improvements**, not just demos.
+### 3. Embedding + Storage
+- Convert chunks → vector embeddings
+- Store in FAISS index
 
----
+### 4. Retrieval
+- Convert query → embedding
+- Retrieve top-K relevant chunks
 
-## 🎯 Use Cases
+### 5. Prompt Construction
+- Combine:
+  - Retrieved context
+  - Chat history
+  - User query
 
-* Internal knowledge assistants
-* Policy & compliance search
-* Research document analysis
-* Contract & legal document QA
-* Technical documentation bots
-
----
-
-## 🧪 Current Status
-
-* [x] Document ingestion
-* [x] Chunking & embedding
-* [x] Vector search
-* [ ] End-to-end RAG pipeline
-* [ ] Evaluation pipeline
-* [ ] UI & API
-* [ ] Performance benchmarking
+### 6. Answer Generation
+- Pass prompt to LLM
+- Generate contextual answer
 
 ---
 
-## 📌 Roadmap
+## 💬 Context-Aware Chat
 
-* Improve chunking strategies
-* Compare embedding models
-* Add multi-query retrieval
-* Implement answer citation highlighting
-* Add experiment tracking
+The system supports multi-turn conversations by maintaining:
 
----
+```
 
-## 🤝 Contributions
+chat_history = [
+{"user": "...", "assistant": "..."}
+]
 
-This project is open to improvements, discussions, and experimentation.
-Feel free to fork or open issues.
+````
 
----
-
-## 📜 License
-
-MIT License
+Only the last few interactions are used to avoid token overflow.
 
 ---
 
-## 🧠 Author
+## ▶️ How to Run
+
+### 1. Clone Repository
+
+```bash
+git clone https://github.com/your-username/document-intelligence.git
+cd document-intelligence
+````
+
+---
+
+### 2. Install Dependencies
+
+```bash
+pip install -r requirements.txt
+```
+
+---
+
+### 3. Run Application
+
+```bash
+python app.py
+```
+
+---
+
+### 4. Open in Browser
+
+```
+http://127.0.0.1:5000
+```
+
+---
+
+## 📸 Demo Workflow
+
+1. Upload a PDF
+2. Wait for processing
+3. Ask questions
+4. Get AI-generated answers with sources
+
+---
+
+## ⚠️ Limitations
+
+* Uses global memory (not multi-user safe)
+* Model loading is heavy (can be optimized)
+* Limited to PDF input
+* No authentication system
+
+---
+
+## 🚀 Future Improvements
+
+* ✅ Add user sessions (multi-user support)
+* ✅ Use faster embedding models
+* ✅ Add reranking (improve accuracy)
+* ✅ Stream responses (ChatGPT-like UI)
+* ✅ Deploy on cloud (AWS / GCP)
+* ✅ Add support for DOCX, TXT
+* ✅ Integrate evaluation metrics
+
+---
+
+## 📊 Evaluation (Planned)
+
+* Retrieval accuracy (Top-K relevance)
+* Answer correctness
+* Latency (response time)
+* Hallucination rate
+
+---
+
+## 🧠 Key Concepts Used
+
+* Retrieval-Augmented Generation (RAG)
+* Semantic Search
+* Vector Databases (FAISS)
+* Prompt Engineering
+* Context-Aware Chat Systems
+
+---
+
+## 🙌 Author
 
 **Chhabi Lal Tamang**
-Machine Learning Engineer | LLM & RAG Systems
-GitHub: [https://github.com/lalchhabi]
 
 ---
+
+## ⭐ If you like this project
+
+Give it a star ⭐ on GitHub and share it!
