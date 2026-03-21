@@ -142,7 +142,7 @@ Only the last few interactions are used to avoid token overflow.
 ### 1. Clone Repository
 
 ```bash
-git clone https://github.com/your-username/document-intelligence.git
+git clone https://github.com/lalchhabi/Open-Source-Document-Intelligence-System.git
 cd document-intelligence
 ````
 
