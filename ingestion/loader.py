@@ -1,7 +1,9 @@
+### Import libraries
 import os
 from pypdf import PdfReader
 import fitz
 from utils.text_cleaner import text_proprocessing
+from langchain_core.documents import Document
 
 
 def pdf_loader(path):
@@ -60,13 +62,15 @@ def pdf_loader(path):
             clean_text = text_proprocessing(text)
 
             # Store cleaned text and metadata
-            docs.append({
-                "text": clean_text,
-                "metadata": {
-                    "source": pdf_path,
-                    "page": page_num + 1
-                }
-            })
+            docs.append(
+                Document(
+                    page_content=clean_text,
+                    metadata={
+                        "source": pdf_path,
+                        "page": page_num + 1
+                    }
+                )
+            )
 
     return docs
 
