@@ -1,67 +1,62 @@
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 
-def chunk_documents(documents, chunk_size=900, chunk_overlap=200):
+def chunk_documents(documents, chunk_size=300, chunk_overlap=50):
     """
-    Split documents into smaller overlapping text chunks.
+    Splits input documents into smaller, token-aware chunks for use in a RAG (Retrieval-Augmented Generation) system.
 
-    This function takes a list of cleaned documents (from the loader)
-    and divides each document into smaller pieces using a recursive
-    text splitter. Chunking is essential for RAG systems because
-    embedding models perform better on shorter, meaningful text segments.
+    This function improves retrieval quality by breaking large documents into smaller,
+    semantically manageable pieces that fit within LLM token limits.
+    
+    It uses a hybrid strategy:
+    - Structure-aware splitting (paragraphs, lines, sentences)
+    - Token-aware chunk sizing using tiktoken encoder
+    - Overlapping chunks to preserve context across boundaries
+    - Basic filtering to remove noisy or too-small chunks
 
     Parameters
     ----------
-    documents : list of dict
-        List of documents where each document contains:
-        - "text": cleaned text
-        - "metadata": information like source file and page number
+    documents : list[Document]
+        List of LangChain Document objects containing page_content and metadata.
 
-    chunk_size : int, optional (default=900)
-        Maximum number of characters per chunk.
+    chunk_size : int, default=300
+        Maximum number of tokens allowed per chunk.
+        Controls the granularity of retrieval (smaller = more precise, larger = more context).
 
-    chunk_overlap : int, optional (default=200)
-        Number of overlapping characters between consecutive chunks.
-        This helps preserve context across chunk boundaries.
+    chunk_overlap : int, default=50
+        Number of overlapping tokens between consecutive chunks.
+        Helps maintain context continuity across chunk boundaries.
 
     Returns
     -------
-    list of dict
-        A list of chunk dictionaries where each chunk contains:
-        - "text": chunked text
-        - "metadata": original metadata + chunk_id
-
+    list[Document]
+        A list of processed document chunks ready for embedding and vector storage.
+        Each chunk contains:
+        - page_content (chunk text)
+        - metadata (source, page, chunk_id, etc.)
     """
-
-    # Initialize LangChain recursive text splitter
-    # It splits text based on hierarchy: paragraphs → lines → sentences → words
-    text_splitter = RecursiveCharacterTextSplitter(
+    splitter = RecursiveCharacterTextSplitter.from_tiktoken_encoder(
         chunk_size=chunk_size,
         chunk_overlap=chunk_overlap,
-        separators=["\n\n", "\n", ".", " ", ""]  # priority of splitting
+        separators=[
+            "\n\n",
+            "\n",
+            ". ",
+            " ",
+        ]
     )
 
-    chunks = []
+    chunks = splitter.split_documents(documents)
 
-    # Loop through each document
-    for doc in documents:
+    filtered_chunks = []
 
-        # Split document text into chunks
-        split_texts = text_splitter.split_text(doc["text"])
+    for i, chunk in enumerate(chunks):
 
-        # Assign chunk IDs and attach metadata
-        for i, chunk in enumerate(split_texts):
+        text = chunk.page_content.strip()
 
-            # Filter out very small or weak chunks
-            # (helps improve embedding and retrieval quality)
-            if len(chunk.strip()) > 200:
+        if len(text) > 200 and len(text.split()) > 40:
 
-                chunks.append({
-                    "text": chunk,
-                    "metadata": {
-                        **doc["metadata"],   # keep original metadata
-                        "chunk_id": i        # add chunk identifier
-                    }
-                })
+            chunk.metadata["chunk_id"] = i
+            filtered_chunks.append(chunk)
 
-    return chunks
+    return filtered_chunks
