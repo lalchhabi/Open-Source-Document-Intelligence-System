@@ -1,69 +1,45 @@
-from sentence_transformers import SentenceTransformer
+### Import libraries
+from langchain_huggingface import HuggingFaceEmbeddings, 
 
-
-class Embedder:
+def get_embedder(
+    model_name = "BAAI/bge-small-en",
+    normalize = True,
+    device = None
+):
     """
-    Embedding module for converting text into vector representations.
+    Creates a LangChain-compatible embedding model.
 
-    This class uses a pre-trained SentenceTransformer model to generate
-    dense vector embeddings for text. These embeddings are later stored
-    in a vector database (FAISS) and used for similarity-based retrieval.
+    This uses HuggingFaceEmbeddings wrapper which integrates directly with:
+    - FAISS
+    - Chroma
+    - LangChain retrievers
+    - LangSmith tracing
 
-    Model Used:
-    -----------
-    Default: "BAAI/bge-small-en"
-    - Lightweight and fast
-    - Good performance for semantic search tasks
+    Parameters
+    ----------
+    model_name : str
+        HuggingFace SentenceTransformer model name.
 
-    Usage:
-    ------
-    embedder = Embedder()
-    embeddings = embedder.embed_texts(["sample text"])
+    normalize : bool
+        Whether to normalize embeddings (important for cosine similarity search).
+
+    device : str or None
+        Device to run model on ("cpu", "cuda"). If None, auto-detects.
+
+    Returns
+    -------
+    HuggingFaceEmbeddings
+        LangChain embedding object ready for vector stores.
     """
+    model_kwargs = []
+    if device:
+        model_kwargs['device'] = device
 
-    def __init__(self, model_name="BAAI/bge-small-en"):
-        """
-        Initialize the embedding model.
-
-        Parameters
-        ----------
-        model_name : str, optional
-            Name of the pre-trained SentenceTransformer model to load.
-            Default is "BAAI/bge-small-en".
-        """
-        # Load the pre-trained embedding model
-        self.model = SentenceTransformer(model_name)
-
-    def embed_texts(self, texts):
-        """
-        Generate vector embeddings for a list of text inputs.
-
-        This function converts each text chunk into a numerical vector
-        that captures its semantic meaning. These vectors are used for
-        similarity search in the vector store.
-
-        Parameters
-        ----------
-        texts : list of str
-            List of text strings (chunks) to be embedded.
-
-        Returns
-        -------
-        numpy.ndarray
-            A 2D array where each row represents the embedding of a text.
-
-        Example
-        -------
-        embeddings = embedder.embed_texts([
-            "Machine learning is powerful",
-            "RAG systems improve accuracy"
-        ])
-        """
-
-        # Encode text into embeddings
-        # show_progress_bar=True helps visualize progress for large datasets
-        return self.model.encode(
-            texts,
-            show_progress_bar=True
-        )
-
+    embeddings = HuggingFaceEmbeddings(
+        model_name = model_name,
+        model_kwargs = model_kwargs,
+        encode_kwargs = {
+            "normalize_embeddings": normalize
+        }
+    )
+    return embeddings
