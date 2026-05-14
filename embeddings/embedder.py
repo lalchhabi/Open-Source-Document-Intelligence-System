@@ -1,5 +1,5 @@
 ### Import libraries
-from langchain_huggingface import HuggingFaceEmbeddings, 
+from langchain_huggingface import HuggingFaceEmbeddings
 
 def get_embedder(
     model_name = "BAAI/bge-small-en",
