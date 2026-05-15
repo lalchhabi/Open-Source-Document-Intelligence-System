@@ -1,113 +1,65 @@
-import faiss
-import numpy as np
+from langchain_community.vectorstores import FAISS
 
 
-class FAISSStore:
+class FAISSVectorStore:
     """
-    FAISS-based Vector Store for efficient similarity search.
+    LangChain-based FAISS vector store for semantic retrieval.
 
-    This class stores text embeddings and enables fast nearest neighbor
-    search using Facebook AI Similarity Search (FAISS).
+    This class handles:
+    - document embedding
+    - vector indexing
+    - similarity search
+    - metadata storage
 
-    Key Responsibilities:
-    ---------------------
-    1. Store embeddings in FAISS index
-    2. Maintain mapping between embeddings and original texts
-    3. Retrieve most relevant text chunks based on query similarity
-
-    Distance Metric:
-    ----------------
-    Uses L2 (Euclidean distance) for similarity search.
-
-    Usage:
-    ------
-    store = FAISSStore(embedding_dim=384)
-    store.add(embeddings, texts, metadata)
-    results = store.search(query_embedding, top_k=5)
+    using LangChain's FAISS integration.
     """
 
-    def __init__(self, embedding_dim):
+    def __init__(self, embeddings):
         """
-        Initialize FAISS index.
+        Initialize vector store.
 
         Parameters
         ----------
-        embedding_dim : int
-            Dimension of embedding vectors (must match model output size).
+        embeddings :
+            LangChain embedding model.
         """
+        self.embeddings = embeddings
+        self.vector_store = None
 
-        # Create FAISS index using L2 distance (Euclidean)
-        self.index = faiss.IndexFlatL2(embedding_dim)
-
-        # Store original texts and metadata (parallel to embeddings)
-        self.texts = []
-        self.metadata = []
-
-    def add(self, embeddings, texts, metadata):
+    def create_vector_store(self, documents):
         """
-        Add embeddings and corresponding data to the vector store.
+        Create FAISS vector store from chunked documents.
 
         Parameters
         ----------
-        embeddings : list or numpy.ndarray
-            List of embedding vectors.
-
-        texts : list of str
-            Original text chunks corresponding to embeddings.
-
-        metadata : list of dict
-            Metadata for each text chunk (e.g., source file, page number).
-
-        Notes
-        -----
-        - Embeddings must be converted to float32 for FAISS compatibility.
-        - Order must be preserved between embeddings, texts, and metadata.
+        documents : list[Document]
+            Chunked LangChain documents.
         """
 
-        # Convert embeddings to NumPy float32 array (required by FAISS)
-        self.index.add(np.array(embeddings).astype("float32"))
+        self.vector_store = FAISS.from_documents(
+            documents=documents,
+            embedding=self.embeddings
+        )
 
-        # Store text and metadata in same order as embeddings
-        self.texts.extend(texts)
-        self.metadata.extend(metadata)
-
-    def search(self, query_embedding, top_k=8):
+    def similarity_search(self, query, top_k=5):
         """
-        Retrieve top-k most similar text chunks for a query.
+        Retrieve most relevant chunks for a query.
 
         Parameters
         ----------
-        query_embedding : numpy.ndarray
-            Embedding vector of the query.
+        query : str
+            User query.
 
-        top_k : int, optional (default=8)
-            Number of most relevant chunks to retrieve.
+        top_k : int
+            Number of documents to retrieve.
 
         Returns
         -------
-        list of dict
-            List of retrieved chunks, each containing:
-            - "text": relevant text chunk
-            - "metadata": associated metadata
-
-        Example
-        -------
-        results = store.search(query_embedding, top_k=5)
+        list[Document]
+            Retrieved relevant documents.
         """
 
-        # Perform similarity search in FAISS
-        distances, indices = self.index.search(
-            np.array([query_embedding]).astype("float32"),
-            top_k
+        return self.vector_store.similarity_search(
+            query=query,
+            k=top_k
         )
-
-        results = []
-
-        # Map retrieved indices back to original texts and metadata
-        for idx in indices[0]:
-            results.append({
-                "text": self.texts[idx],
-                "metadata": self.metadata[idx]
-            })
-
-        return results
