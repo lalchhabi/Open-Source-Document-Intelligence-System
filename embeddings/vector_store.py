@@ -1,5 +1,5 @@
+### Import libraries
 from langchain_community.vectorstores import FAISS
-
 
 class FAISSVectorStore:
     """
