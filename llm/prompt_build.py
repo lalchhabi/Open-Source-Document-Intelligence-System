@@ -1,91 +1,46 @@
-def build_prompt(retrieved_chunks, query, chat_history=None):
+### Import libraries
+from langchain_core.prompts import ChatPromptTemplate
+
+def build_prompt():
+    """Create a Langchain prompt template for the RAG pipeline this prompt is responsible got guiding the LLM to generate context-aware response.
     """
-    Build the final prompt for the LLM.
+    prompt = ChatPromptTemplate.from_messages(
+         [
+             ### system message -> defines assistant role and behavior
+            (
+            "system",
+    """
+    You are a helpful AI assistant for document question answering. 
+    Your task is to answer questions ONLY using the provided context.
 
-    This function combines:
-    1. Retrieved document chunks (context)
-    2. User query
-    3. Optional chat history
-
-    The final prompt is structured to guide the LLM to:
-    - Answer based only on provided context
+    Rules:
+    - Use the retrieved context as the primary source of truth
     - Use conversation history for continuity
-    - Avoid hallucination
+    - If the answer is not found in the context, say:
+    "I don't know"
+    - Do not hallucinate or make up information
+    - Keep answers clear and concise
+    """
+         ),
 
-    Parameters
-    ----------
-    retrieved_chunks : list of dict
-        List of relevant chunks retrieved from vector store.
-        Each chunk contains:
-        - "text": chunk content
-        - "metadata": source info
+         ### Human message -> dynamic RAG input
+         (
+             "human",
+    """
+    Conversation History:
+    {chat_history}
 
-    query : str
-        User's current question.
+    Retrieved Context:
+    {context}
 
-    chat_history : list, optional
-        Previous conversation history.
-        Format:
-        [
-            {"user": "...", "assistant": "..."},
-            ...
+    Question:
+    {question}
+
+    Answer:
+    """
+            )
+         
         ]
 
-    Returns
-    -------
-    str
-        Final formatted prompt ready for LLM input.
-
-    Process:
-    --------
-    1. Combine retrieved chunks into a single context block
-    2. Format recent chat history (last few turns)
-    3. Construct structured prompt with instructions
-    """
-
-    # -----------------------
-    # Step 1: Build Context
-    # -----------------------
-    # Combine all retrieved chunks into one text block
-    # Each chunk is prefixed with "-" for readability
-    context = "\n\n".join(
-        [f"- {chunk['text']}" for chunk in retrieved_chunks]
     )
-
-    # -----------------------
-    # Step 2: Build Chat History
-    # -----------------------
-    history_text = ""
-
-    # Include only recent history to avoid token overflow
-    if chat_history:
-        for turn in chat_history[-3:]:  # last 3 conversations only
-            history_text += f"User: {turn['user']}\n"
-            history_text += f"Assistant: {turn['assistant']}\n"
-
-    # -----------------------
-    # Step 3: Construct Final Prompt
-    # -----------------------
-    prompt = f"""
-You are a helpful assistant.
-
-Use BOTH the conversation history and context to answer.
-
-Conversation History:
-{history_text}
-
-Context:
-{context}
-
-Question:
-{query}
-
-Instructions:
-- Answer using ONLY the context
-- Be concise and clear
-- If not found, say "I don't know"
-
-Answer:
-"""
-
     return prompt
