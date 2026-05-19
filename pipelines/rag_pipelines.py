@@ -1,47 +1,43 @@
-from llm.hf_model import load_model
+### Import libraries
 from llm.prompt_build import build_prompt
-from llm.generator import generate_answer
-
+from reranker.reranker import Reranker
 
 class RAGPipeline:
     """
-    Retrieval-Augmented Generation (RAG) Pipeline.
+    End-to-end Retrieval-Augmented Generation (RAG) pipeline.
 
-    This class orchestrates the full pipeline:
-    1. Retrieve relevant document chunks
-    2. Build a structured prompt
-    3. Generate answer using LLM
+    This pipeline orchestrates:
+    - document retrieval
+    - context construction
+    - prompt formatting
+    - LLM-based answer generation
 
-    Components:
-    -----------
-    retriever : Retriever
-        Handles semantic search over document embeddings.
-
-    tokenizer, model :
-        HuggingFace model used for text generation.
-
-    Workflow:
-    ---------
-    User Query → Retrieve Chunks → Build Prompt → Generate Answer
+    using LangChain components and LCEL.
     """
 
-    def __init__(self, retriever):
+    def __init__(self, retriever, llm):
         """
         Initialize RAG Pipeline.
 
         Parameters
         ----------
-        retriever : Retriever
-            Instance responsible for retrieving relevant chunks.
+        retriever : Retriever responsible for fetching relevant documents.
+        llm : LangChain chat model used for response generation.
         """
 
-        # Retriever handles vector search
         self.retriever = retriever
+        self.llm = llm
 
-        # Load LLM model + tokenizer
-        self.tokenizer, self.model = load_model()
+        # Initialize reranker
+        self.reranker = Reranker()
 
-    def run(self, query, top_k=5, chat_history=None):
+        # Build prompt template
+        self.prompt = build_prompt()
+
+        # Langchain Expression Language
+        self.chain = self.prompt | self.llm
+
+    def run(self, query, retrieve_k=10, top_k=5, chat_history=""):
         """
         Execute the full RAG pipeline.
 
@@ -55,11 +51,6 @@ class RAGPipeline:
 
         chat_history : list, optional
             Previous conversation history for context-aware responses.
-            Format:
-            [
-                {"user": "...", "assistant": "..."},
-                ...
-            ]
 
         Returns
         -------
@@ -79,25 +70,34 @@ class RAGPipeline:
 
         # Step 1: Retrieve relevant chunks
         print("\nRetrieving chunks...")
-        chunks = self.retriever.retrieve_chunks(query, top_k)
-
-        # Step 2: Build prompt
-        print("Building prompt...")
-        prompt = build_prompt(
-            chunks,
-            query,
-            chat_history
+        chunks = self.retriever.retrieve_chunks(
+            query, 
+            top_k=retrieve_k
+            )
+        
+        # Step 2: Implement Reranker in retrieve chunks
+        reranked_chunks = self.reranker.rerank(
+            query=query,
+            documents=chunks,
+            top_k=top_k
         )
 
-        # Step 3: Generate answer using LLM
-        print("Sending to LLM...")
-        answer = generate_answer(
-            prompt,
-            self.tokenizer,
-            self.model
-        )
+        # Step 3: Convert chunks into context string
+        context = "\n\n".join([
+            chunk.page_content
+            for chunk in reranked_chunks
+        ])
+
+        print("Generating answer...")
+
+        # Step 3: Generate answer using LCEL chain
+        response  = self.chain.invoke({
+            'context': context,
+            'question': query,
+            'chat_history': chat_history
+        })
 
         print("Answer generated")
 
         # Return both answer and sources (chunks)
-        return answer, chunks
+        return response.content, reranked_chunks
