@@ -418,18 +418,16 @@ queryInput.addEventListener("keypress", function(e){
     }
 });
 
-function sendMessage(){
+async function sendMessage() {
 
     const query = queryInput.value.trim();
-
-    if(!query) return;
+    if (!query) return;
 
     welcomeScreen.style.display = "none";
 
     const msgId = "msg-" + Date.now();
 
     /* USER MESSAGE */
-
     chatArea.innerHTML += `
         <div class="message">
             <div class="user-message">
@@ -438,15 +436,12 @@ function sendMessage(){
         </div>
     `;
 
-    /* BOT THINKING */
-
+    /* BOT MESSAGE CONTAINER */
     chatArea.innerHTML += `
-        <div class="message" id="${msgId}">
-            <div class="bot-message">
+        <div class="message">
+            <div class="bot-message" id="${msgId}">
                 <div class="typing">
-                    <span></span>
-                    <span></span>
-                    <span></span>
+                    <span></span><span></span><span></span>
                 </div>
             </div>
         </div>
@@ -454,39 +449,30 @@ function sendMessage(){
 
     scrollBottom();
 
-    fetch("/ask", {
-        method:"POST",
-        headers:{
-            "Content-Type":"application/json"
+    const response = await fetch("/ask", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
         },
-        body:JSON.stringify({
-            query:query
-        })
-    })
-    .then(res => res.json())
-    .then(data => {
-
-        document.getElementById(msgId).innerHTML = `
-            <div class="bot-message">
-                ${data.answer}
-            </div>
-        `;
-
-        scrollBottom();
-
-    })
-    .catch(err => {
-
-        document.getElementById(msgId).innerHTML = `
-            <div class="bot-message">
-                ❌ Error generating response
-            </div>
-        `;
-
+        body: JSON.stringify({ query })
     });
 
-    queryInput.value = "";
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
 
+    let result = "";
+
+    const botMessage = document.getElementById(msgId);
+
+    while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        result += decoder.decode(value);
+        botMessage.innerText = result;
+    }
+
+    queryInput.value = "";
 }
 
 /* ================= NEW CHAT ================= */

@@ -1,6 +1,7 @@
-# Import python libraries
-from flask import Flask, request, render_template, jsonify
+# Import python libraries 
+from flask import Flask, request, Response, render_template, jsonify
 import os
+import json
 
 # Import RAG pipeline libraries
 from ingestion.loader import pdf_loader
@@ -40,11 +41,7 @@ def init_llm():
 
     return llm
 
-
-
-# ===============================
 # MAIN PAGE ROUTE
-# ===============================
 @app.route("/", methods=["GET"])
 def index():
     """
@@ -104,8 +101,7 @@ def upload():
 
         print("Hybrid Retriever........")
         retriever = HybridRetriever(
-            vector_store=vector_store,
-            top_k=5
+            vector_store=vector_store
         )
         retriever.build_sparse_retriever(documents)
 
@@ -130,9 +126,11 @@ def upload():
 @app.route("/ask", methods = ['POST'])
 def ask():
     """
-    Handles both:
-    1. General chat (LLM only)
-    2. Document-based QA (RAG)
+    Streaming endpoint for both:
+    1. Normal Chat Mode (LLM only)
+    2. RAG Mode (retrieval + LLM)
+
+    Response is streamed token-by-token using Server-Sent Streaming.
     """
 
     global rag_pipeline, chat_history
@@ -142,49 +140,65 @@ def ask():
 
     if not query:
         return jsonify({"error": "Empty query"}), 400
+    
+    def generate():
+        """Streaming generator for Flask response.
 
-    try:
-        # CASE 1: RAG MODE
-        if rag_pipeline is not None:
-            answer, sources = rag_pipeline.run(
-                query=query,
-                chat_history=chat_history
-            )
+        This function handles real-time token streaming for both:
+        - RAG-based responses (with document retrieval)
+        - Normal LLM chat responses
 
-            chat_history.append({
-                "user": query,
-                "assistant": answer
-            })
+        """
+        global chat_history
+        full_answer = ""
 
-            chat_history = chat_history[-5:]
+        try:
+            # CASE 1: RAG MODE
+            if rag_pipeline is not None:
+                stream, sources = rag_pipeline.stream(
+                    query=query,
+                    chat_history=chat_history
+                )
 
-            return jsonify({
-                "mode": "rag",
-                "answer": answer,
-                "sources": [
+                for chunk in stream:
+                    token = chunk.content
+                    full_answer += token
+
+                # send token to frontend
+                    yield token
+
+                # send sources at the end (as JSON line)
+                yield "\n\n[SOURCES]" + json.dumps([
                     {
-                        "page": s.metadata.get("page", None),
+                        "page": s.metadata.get('page'),
                         "text": s.page_content[:200]
                     }
                     for s in sources
-                ]
-            })
+                ])
 
-        # CASE 2: NORMAL CHAT MODE
-        llm = init_llm()
-        response = llm.invoke(query)
 
-        return jsonify({
-            "mode": "chat",
-            "answer": response.content if hasattr(response, "content") else response,
-            "sources": []
+            # CASE 2: NORMAL CHAT MODE
+            else:
+                llm = init_llm()
+                stream = llm.stream(query)
+
+                for chunk in stream:
+                    token = chunk.content
+                    full_answer += token
+                    yield token
+
+
+        except Exception as e:
+            yield f"\n[ERROR]: {str(e)}"
+
+
+        # Save memory after streaming
+        chat_history.append({
+            "user": query,
+            "assistant": full_answer
         })
-
-    except Exception as e:
-        return jsonify({
-            "status": "error",
-            "msg": str(e)
-        }), 500
+        chat_history = chat_history[-5:]
+    return Response(generate(), mimetype = 'text/plain')
 
 # Run App
 if __name__ == "__main__":
