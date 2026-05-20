@@ -15,7 +15,7 @@ class RAGPipeline:
     using LangChain components and LCEL.
     """
 
-    def __init__(self, retriever, llm):
+    def __init__(self, retriever, llm, reranker):
         """
         Initialize RAG Pipeline.
 
@@ -27,9 +27,7 @@ class RAGPipeline:
 
         self.retriever = retriever
         self.llm = llm
-
-        # Initialize reranker
-        self.reranker = Reranker()
+        self.reranker = reranker
 
         # Build prompt template
         self.prompt = build_prompt()
@@ -70,9 +68,8 @@ class RAGPipeline:
 
         # Step 1: Retrieve relevant chunks
         print("\nRetrieving chunks...")
-        chunks = self.retriever.retrieve_chunks(
-            query, 
-            top_k=retrieve_k
+        chunks = self.retriever.retrieve(
+            query
             )
         
         # Step 2: Implement Reranker in retrieve chunks
