@@ -31,7 +31,7 @@ def get_embedder(
     HuggingFaceEmbeddings
         LangChain embedding object ready for vector stores.
     """
-    model_kwargs = []
+    model_kwargs = {}
     if device:
         model_kwargs['device'] = device
 
