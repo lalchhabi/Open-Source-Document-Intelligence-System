@@ -98,3 +98,43 @@ class RAGPipeline:
 
         # Return both answer and sources (chunks)
         return response.content, reranked_chunks
+    
+    def stream(self, query, top_k=5, chat_history = ""):
+        """Stream responses from the Retrieval-Augmented Generation (RAG) pipeline.
+
+        This function executes the full RAG workflow incrementally and yields
+        partial LLM outputs in real-time instead of waiting for the full response.
+
+
+        Args:
+            query (str): user question or input prompt
+            retrieve_k (int, optional): Number of documents initially retrieved. Defaults to 10.
+            top_k (int, optional): Top ranked documents. Defaults to 5.
+            chat_history (str, optional): Previous conversation history used to maintain context. Defaults to "".
+        """
+        print("\n Retrieving Chunks.....")
+
+        chunks = self.retriever.retrieve(
+            query=query,
+        )
+
+        reranked_chunks = self.reranker.rerank(
+            query = query,
+            documents = chunks,
+            top_k=top_k
+        )
+
+        context = "\n\n".join([
+            chunk.page_content
+            for chunk in reranked_chunks
+        ])
+
+        print("Streaming Answer.........")
+
+        stream_response = self.chain.stream({
+            "context": context,
+            "question": query,
+            "chat_history": chat_history
+        })
+
+        return stream_response, reranked_chunks
