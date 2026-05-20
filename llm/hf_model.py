@@ -18,7 +18,8 @@ def load_llm():
         repo_id=MODEL_NAME,
         task = "conversational",
         temperature=0.3,
-        huggingfacehub_api_token=HF_TOKEN
+        huggingfacehub_api_token=HF_TOKEN,
+        streaming=True
         )
     
     model = ChatHuggingFace(llm = llm)
