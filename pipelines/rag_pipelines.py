@@ -68,9 +68,13 @@ class RAGPipeline:
 
         # Step 1: Retrieve relevant chunks
         print("\nRetrieving chunks...")
-        chunks = self.retriever.retrieve(
-            query
-            )
+        chunks, relevance_score = self.retriever.retrieve(query)
+
+        # Threshold 
+        THRESHOLD = 0.3
+
+        if relevance_score < THRESHOLD:
+            return None, None  # means "use normal chat"
         
         # Step 2: Implement Reranker in retrieve chunks
         reranked_chunks = self.reranker.rerank(
@@ -114,9 +118,18 @@ class RAGPipeline:
         """
         print("\n Retrieving Chunks.....")
 
-        chunks = self.retriever.retrieve(
+        chunks, relevance_score = self.retriever.retrieve(
             query=query,
         )
+
+        THRESHOLD = 0.3
+        
+        # Router Logic
+        if relevance_score < THRESHOLD:
+            print("Switching to Normal Chat Mode")
+            return self.llm.stream(query), []
+        
+        
 
         reranked_chunks = self.reranker.rerank(
             query = query,
