@@ -72,23 +72,54 @@ class HybridRetriever:
             raise ValueError("Sparse retriever not intialized. Call build_sparse)retriever() first.")
         
         # Step 1: Retrieve from both systems
-        dense_docs = self.dense_retriever.invoke(query)
+        dense_docs = self.vector_store.similarity_search_with_score(
+            query,
+            k = self.top_k
+        )
 
+        # Sparse retrieval
         sparse_docs = self.sparse_retriever.invoke(query)
 
-        # Step 2: Score fusion using dictionary
+        # Flatten sparse docs safely
+        flattend_sparse_docs = []
+
+        for item in sparse_docs:
+            if isinstance(item, list):
+                flattend_sparse_docs.extend(item)
+            else:
+                flattend_sparse_docs.append(item)
+
+        sparse_docs = flattend_sparse_docs
+
+
+        # Step 2: Normalize scores into dictionary
         doc_scores = {}
 
-        for doc in dense_docs:
+        # Dense scoring
+        for doc, score in dense_docs:
             key = doc.page_content
-            doc_scores[key] = doc_scores.get(key, 0) + dense_weight
-        
+
+            # lower score = better similarity
+            normalized_score = 1 / (1 + score)
+
+            doc_scores[key] = (
+                doc_scores.get(key, 0) + normalized_score * dense_weight
+            )
+
+
+        # BM25: treat equally (no score)
         for doc in sparse_docs:
             key = doc.page_content
             doc_scores[key] = doc_scores.get(key, 0) + sparse_weight
 
-        # Step 3: Convert back to Document objects
-        all_docs = {doc.page_content: doc for doc in dense_docs + sparse_docs}
+        # Step 3: Convert back to Document objects or merge docs
+        all_docs = {
+            doc.page_content: doc
+            for doc, _ in dense_docs
+            }
+
+        for doc in sparse_docs:
+            all_docs[doc.page_content] = doc
 
         # Step 4: Sort by score
         sorted_docs = sorted(
@@ -101,6 +132,12 @@ class HybridRetriever:
         final_docs = [
             all_docs[text]
             for text, _ in sorted_docs
+            if text in all_docs
         ]
 
-        return final_docs[:self.top_k]
+        relevance_score = (
+            sorted_docs[0][1]
+            if sorted_docs else 0
+        )
+
+        return final_docs[:self.top_k], relevance_score
