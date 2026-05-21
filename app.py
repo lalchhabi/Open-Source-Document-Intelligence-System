@@ -1,7 +1,7 @@
 # Import python libraries 
 from flask import Flask, request, Response, render_template, jsonify
 import os
-import json
+from config.state import app_state
 
 # Import RAG pipeline libraries
 from ingestion.loader import pdf_loader
@@ -61,18 +61,25 @@ def index():
     # Upload Document (Enable RAG mode)
 @app.route("/upload", methods = ['POST'])
 def upload():
-    """Upload document and build RAG pipeline
+    """Upload document and build RAG pipeline.
+
+    After upload:
+    - System switches to RAG mode explicitly
+    - Chat history is reset
+    - Pipeline becomes active for /ask endpoint
     """
 
-    global rag_pipeline, chat_history
+    global rag_pipeline, chat_history, app_mode
 
     file = request.files.get("pdf")
     if not file:
         return jsonify({'status':'error', "msg":"No file uploaded"}),400
     
+    # Save file
     path = os.path.join(UPLOAD_FOLDER, file.filename)
     file.save(path)
 
+    # Reset chat history for new document
     chat_history.clear()
 
     try:
@@ -81,7 +88,7 @@ def upload():
 
         print("Chunking documents.......")
         chunks = chunk_documents(docs)
-                                                                
+                                                            
         texts = [c.page_content for c in chunks]
         metadata = [c.metadata for c in chunks]
 
@@ -114,14 +121,31 @@ def upload():
             llm=llm,
             reranker=Reranker()
         )
+
+        # Implement Switch Mode here
+        app_state['mode'] = 'rag'
+        app_state['rag_pipeline'] = rag_pipeline
+
         return jsonify({
             "status": "success",
-            "msg": "Document Uploaded. RAG mode enabled."
+            "mode": "rag",
+            "msg": "Document Uploaded Successfully. RAG mode enabled."
         })
     
     except Exception as e:
         return jsonify({"status":'error', 'msg':str(e)}), 500
     
+@app.route("/remove-doc", methods=["POST"])
+def remove_doc():
+    global rag_pipeline
+
+    rag_pipeline = None
+
+    app_state["mode"] = "chat"
+    app_state["rag_pipeline"] = None
+
+    return jsonify({"status": "switched to chat mode"})
+
 # Chat Endpoint (Smart Routing)
 @app.route("/ask", methods = ['POST'])
 def ask():
@@ -154,30 +178,17 @@ def ask():
 
         try:
             # CASE 1: RAG MODE
-            if rag_pipeline is not None:
-                stream, sources = rag_pipeline.stream(
-                    query=query,
-                    chat_history=chat_history
+            if (app_state['mode'] == 'rag' and app_state['rag_pipeline'] is not None):
+                stream, sources = app_state['rag_pipeline'].stream(query=query,
+                chat_history=chat_history
                 )
-
+                
                 for chunk in stream:
                     token = chunk.content
                     full_answer += token
-
-                # send token to frontend
                     yield token
 
-                # send sources at the end (as JSON line)
-                yield "\n\n[SOURCES]" + json.dumps([
-                    {
-                        "page": s.metadata.get('page'),
-                        "text": s.page_content[:200]
-                    }
-                    for s in sources
-                ])
-
-
-            # CASE 2: NORMAL CHAT MODE
+            # Case 2: Normal Chat Mode
             else:
                 llm = init_llm()
                 stream = llm.stream(query)
@@ -186,19 +197,21 @@ def ask():
                     token = chunk.content
                     full_answer += token
                     yield token
-
-
+            
         except Exception as e:
             yield f"\n[ERROR]: {str(e)}"
 
-
-        # Save memory after streaming
+        # Save chat history
         chat_history.append({
-            "user": query,
-            "assistant": full_answer
+            "user":query,
+            "assistant":full_answer
         })
-        chat_history = chat_history[-5:]
-    return Response(generate(), mimetype = 'text/plain')
+        # keep last 5 chats only
+        chat_history = chat_history[:5]
+
+    return Response(
+        generate(), 
+        mimetype="text/plain")
 
 # Run App
 if __name__ == "__main__":
