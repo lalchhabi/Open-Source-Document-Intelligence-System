@@ -341,6 +341,11 @@ body{
                     📎
                 </button>
 
+                <button id ="removeDocBtn">
+                    Remove Document
+    
+                </button>
+
                 <input
                     type="text"
                     id="queryInput"
@@ -389,7 +394,7 @@ pdfFile.addEventListener("change", () => {
 
     if(!file) return;
 
-    fileInfo.innerHTML = `📄 Uploaded: ${file.name}`;
+    fileInfo.innerHTML = `📄 Wait file is Uploading...: ${file.name}`;
 
     const formData = new FormData();
     formData.append("pdf", file);
@@ -405,6 +410,45 @@ pdfFile.addEventListener("change", () => {
     .catch(err => {
         fileInfo.innerHTML = `❌ Upload failed`;
     });
+
+});
+
+const removeDocBtn = document.getElementById("removeDocBtn");
+
+removeDocBtn.addEventListener("click", async () => {
+
+    try {
+
+        const response = await fetch("/remove-doc", {
+            method: "POST"
+        });
+
+        const data = await response.json();
+
+        // Show message in chatbot
+        chatArea.innerHTML += `
+            <div class="message">
+                <div class="bot-message">
+                    ${data.msg}
+                </div>
+            </div>
+        `;
+
+        scrollBottom();
+
+    } catch (error) {
+
+        console.error(error);
+
+        chatArea.innerHTML += `
+            <div class="message">
+                <div class="bot-message">
+                    ❌ Failed to remove document
+                </div>
+            </div>
+        `;
+
+    }
 
 });
 
