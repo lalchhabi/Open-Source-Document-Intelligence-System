@@ -45,3 +45,26 @@ def build_prompt():
 
     )
     return prompt
+
+
+def generate_chat_title(llm, messages):
+    """Generate a meaningful title from conversation history context with prompt
+    """
+    conversation_text = "\n".join(
+        [f"{m['role']}: {m['content']}" for m in messages]
+
+    )
+
+    prompt = f"""
+    You are a chat title generator.
+    Create a short 3-6 word title for this conversation:
+
+    {conversation_text}
+
+    Rules:
+    - No punctuation
+    - No quotes
+    - Very concise
+    """
+    response = llm.invoke(prompt)
+    return response.content.strip()
