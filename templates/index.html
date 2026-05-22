@@ -189,6 +189,22 @@ body{
     background:#3a3a3a;
 }
 
+.delete-btn{
+    background:#2d2d2d;
+    border:none;
+    color:white;
+    width:42px;
+    height:42px;
+    border-radius:10px;
+    cursor:pointer;
+    font-size:18px;
+}
+
+.upload-btn:hover{
+    background:#3a3a3a;
+
+}
+
 #queryInput{
     flex:1;
     background:transparent;
@@ -337,13 +353,12 @@ body{
 
                 <input type="file" id="pdfFile" hidden>
 
-                <button class="upload-btn" id="uploadBtn">
+                <button class="upload-btn" id="uploadBtn" title="Please upload document for RAG mode">
                     📎
                 </button>
 
-                <button id ="removeDocBtn">
-                    Remove Document
-    
+                <button class ="delete-btn" id ="removeDocBtn" title="Remove uploaded document for normal chat">
+                    🗑️
                 </button>
 
                 <input
@@ -405,7 +420,7 @@ pdfFile.addEventListener("change", () => {
     })
     .then(res => res.json())
     .then(data => {
-        fileInfo.innerHTML = `✅ ${file.name} processed successfully`;
+        fileInfo.innerHTML = `✅ ${file.name} uploaded successfully`;
     })
     .catch(err => {
         fileInfo.innerHTML = `❌ Upload failed`;
@@ -450,6 +465,23 @@ removeDocBtn.addEventListener("click", async () => {
 
     }
 
+});
+
+removeDocBtn.addEventListener("click", async () => {
+
+    const res = await fetch("/remove-doc", {
+        method: "POST"
+    });
+
+    const data = await res.json();
+
+    // IMPORTANT: clear upload message
+    fileInfo.innerHTML = "";
+
+    // optional: reset file input
+    pdfFile.value = "";
+
+    console.log(data.msg);
 });
 
 /* ================= SEND MESSAGE ================= */
