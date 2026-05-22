@@ -1,8 +1,10 @@
-# Import python libraries 
+# Import libraries 
 from flask import Flask, request, Response, render_template, jsonify
 import os
+from llm.prompt_build import generate_chat_title
 from config.state import app_state
 import uuid
+from utils.title_generator import finalize_title
 
 # Import RAG pipeline libraries
 from ingestion.loader import pdf_loader
@@ -148,15 +150,27 @@ def remove_doc():
 # Route for new chat
 @app.route("/new-chat", methods = ['POST'])
 def new_chat():
-    session_id = str(uuid.uuid4())
 
-    chat_sessions[session_id] = {
+    global chat_sessions, app_state
+
+    data = request.get_json(silent=True) or {}
+    old_id = data.get("session_id")
+    llm = init_llm()
+
+    # finalize old chat title
+    if old_id in chat_sessions:
+        finalize_title(chat_sessions[old_id], llm)
+
+    new_id = str(uuid.uuid4())
+
+    chat_sessions[new_id] = {
         "title": "New Chat",
         "messages": [],
-        "mode": app_state["mode"]
+        "mode": app_state["mode"],
+        "title_generated": False
     }
     return jsonify({
-        "session_id": session_id,
+        "session_id": new_id,
         "title": "New Chat"
     })
 
@@ -237,9 +251,19 @@ def ask():
         # keep last 5 exchanges(10 messages)
         session['messages'] = chat_history[-10:]
 
-        # Auto title generation
-        if len(session['messages']) ==2:
-            session['title'] = query[:30]
+        # Title generation logic
+
+        llm = init_llm()
+        # if chat is still short -> wait
+        if len(session['messages']) < 6:
+            pass
+        
+        # if enough messages -> generate title once
+        elif not session.get("title_generated", False):
+            
+            title = generate_chat_title(llm, session['messages'])
+            session['title'] = title
+            session['title_generated'] = True
 
     return Response(
         generate(), 
@@ -266,6 +290,17 @@ def load_session(session_id):
             "error": "not found"
         }), 404
     return jsonify(session)
+
+# if user leaves early
+@app.route("/close-session", methods = ['POST'])
+def close_session():
+    session_id = request.json.get('session_id')
+
+    if session_id in chat_sessions:
+        llm = init_llm()
+        finalize_title(chat_sessions[session_id], llm)
+
+    return jsonify({'status': "ok"})
 
 
 # Run App
