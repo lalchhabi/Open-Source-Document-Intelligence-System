@@ -144,7 +144,8 @@ def remove_doc():
     app_state["mode"] = "chat"
     app_state["rag_pipeline"] = None
 
-    return jsonify({"status": "switched to chat mode"})
+    return jsonify({"status": "switched to chat mode",
+                    "msg":"Document removed. Normal chat mode enabled."})
 
 # Chat Endpoint (Smart Routing)
 @app.route("/ask", methods = ['POST'])
