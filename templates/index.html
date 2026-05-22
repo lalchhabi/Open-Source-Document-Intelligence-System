@@ -364,7 +364,7 @@ body{
                 <input
                     type="text"
                     id="queryInput"
-                    placeholder="Ask anything about your document..."
+                    placeholder="Ask a question or upload a document..."
                 >
 
                 <button class="send-btn" id="sendBtn">
@@ -384,6 +384,7 @@ body{
 <script>
 
 /* ================= ELEMENTS ================= */
+let currentSessionId = null;
 
 const uploadBtn = document.getElementById("uploadBtn");
 const pdfFile = document.getElementById("pdfFile");
@@ -530,7 +531,10 @@ async function sendMessage() {
         headers: {
             "Content-Type": "application/json"
         },
-        body: JSON.stringify({ query })
+        body: JSON.stringify({ 
+            query:query,
+            session_id: currentSessionId
+        })
     });
 
     const reader = response.body.getReader();
@@ -547,6 +551,8 @@ async function sendMessage() {
         result += decoder.decode(value);
         botMessage.innerText = result;
     }
+    // refresh sidebar titles
+    loadSessions();
 
     queryInput.value = "";
 }
@@ -562,6 +568,78 @@ newChatBtn.addEventListener("click", () => {
         </div>
     `;
 
+});
+
+// connect to new chat button
+document.getElementById("newChatBtn").addEventListener("click", async () => {
+
+    const res = await fetch("/new-chat", {
+        method: "POST"
+    });
+
+    const data = await res.json();
+    console.log("SESSION CREATED:", data.session_id);
+
+    currentSessionId = data.session_id;
+
+    // clear chat UI
+    chatArea.innerHTML = "";
+
+});
+
+// load sidebar chat list
+async function loadSessions() {
+
+    const res = await fetch("/sessions");
+    const data = await res.json();
+
+    const chatHistory = document.getElementById("chatHistory");
+
+    chatHistory.innerHTML = "";
+
+    data.forEach(chat => {
+
+        chatHistory.innerHTML += `
+            <div class="chat-item" onclick="openChat('${chat.session_id}')">
+                ${chat.title}
+            </div>
+        `;
+    });
+}
+
+// open existing chat
+async function openChat(sessionId) {
+
+    currentSessionId = sessionId;
+
+    const res = await fetch(`/session/${sessionId}`);
+    const data = await res.json();
+
+    chatArea.innerHTML = "";
+
+    data.messages.forEach(msg => {
+
+        chatArea.innerHTML += `
+            <div class="message ${msg.role}">
+                ${msg.content}
+            </div>
+        `;
+    });
+}
+
+window.addEventListener("load", async () => {
+
+    const res = await fetch("/new-chat", {
+        method: "POST"
+    });
+
+    const data = await res.json();
+
+    currentSessionId = data.session_id;
+
+    console.log("Auto session created:", currentSessionId);
+
+    loadSessions();
 });
 
 /* ================= AUTO SCROLL ================= */

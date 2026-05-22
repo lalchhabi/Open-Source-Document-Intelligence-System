@@ -2,6 +2,7 @@
 from flask import Flask, request, Response, render_template, jsonify
 import os
 from config.state import app_state
+import uuid
 
 # Import RAG pipeline libraries
 from ingestion.loader import pdf_loader
@@ -28,7 +29,7 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 rag_pipeline = None
 
 # Chat memory (stores last few conversations)
-chat_history = []
+chat_sessions = {}
 
 # general chat model
 llm = None
@@ -78,9 +79,6 @@ def upload():
     # Save file
     path = os.path.join(UPLOAD_FOLDER, file.filename)
     file.save(path)
-
-    # Reset chat history for new document
-    chat_history.clear()
 
     try:
         print("Loading PDF......")
@@ -147,6 +145,21 @@ def remove_doc():
     return jsonify({"status": "switched to chat mode",
                     "msg":"Document removed. Normal chat mode enabled."})
 
+# Route for new chat
+@app.route("/new-chat", methods = ['POST'])
+def new_chat():
+    session_id = str(uuid.uuid4())
+
+    chat_sessions[session_id] = {
+        "title": "New Chat",
+        "messages": [],
+        "mode": app_state["mode"]
+    }
+    return jsonify({
+        "session_id": session_id,
+        "title": "New Chat"
+    })
+
 # Chat Endpoint (Smart Routing)
 @app.route("/ask", methods = ['POST'])
 def ask():
@@ -158,13 +171,23 @@ def ask():
     Response is streamed token-by-token using Server-Sent Streaming.
     """
 
-    global rag_pipeline, chat_history
+    global rag_pipeline, app_state
 
     data = request.get_json()
     query = data.get("query", "")
+    session_id = data.get("session_id")
 
     if not query:
         return jsonify({"error": "Empty query"}), 400
+    
+    # Get session 
+    session = chat_sessions.get(session_id)
+    if not session:
+        return jsonify({
+            'error':'Invalid session'
+        }), 400
+    
+    chat_history = session['messages']
     
     def generate():
         """Streaming generator for Flask response.
@@ -174,7 +197,6 @@ def ask():
         - Normal LLM chat responses
 
         """
-        global chat_history
         full_answer = ""
 
         try:
@@ -202,17 +224,49 @@ def ask():
         except Exception as e:
             yield f"\n[ERROR]: {str(e)}"
 
-        # Save chat history
+        # Save message to session
         chat_history.append({
-            "user":query,
-            "assistant":full_answer
+            "role":"user",
+            "content":query
         })
-        # keep last 5 chats only
-        chat_history = chat_history[:5]
+
+        chat_history.append({
+            "role":'assistant',
+            "content": full_answer
+        })
+        # keep last 5 exchanges(10 messages)
+        session['messages'] = chat_history[-10:]
+
+        # Auto title generation
+        if len(session['messages']) ==2:
+            session['title'] = query[:30]
 
     return Response(
         generate(), 
         mimetype="text/plain")
+
+# Get sidebar chat list
+@app.route("/sessions", methods = ["GET"])
+def get_sessions():
+    return jsonify([
+        {
+            "session_id": sid,
+            "title": data['title']
+        }
+        for sid, data in chat_sessions.items()
+        if len(data['messages']) > 0
+    ])
+
+# Load specific chat
+@app.route("/session/<session_id>", methods = ['GET'])
+def load_session(session_id):
+    session = chat_sessions.get(session_id)
+    if not session:
+        return jsonify({
+            "error": "not found"
+        }), 404
+    return jsonify(session)
+
 
 # Run App
 if __name__ == "__main__":
