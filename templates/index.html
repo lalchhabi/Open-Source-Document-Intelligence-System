@@ -629,15 +629,21 @@ async function openChat(sessionId) {
 
 window.addEventListener("load", async () => {
 
-    const res = await fetch("/new-chat", {
-        method: "POST"
+    const response = await fetch("/new-chat", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            session_id: null
+        })
     });
 
-    const data = await res.json();
+    const data = await response.json();
 
     currentSessionId = data.session_id;
 
-    console.log("Auto session created:", currentSessionId);
+    console.log("Session created:", currentSessionId);
 
     loadSessions();
 });
