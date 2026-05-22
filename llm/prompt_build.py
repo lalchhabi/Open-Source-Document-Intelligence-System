@@ -17,7 +17,8 @@ def build_prompt():
     - Use the retrieved context as the primary source of truth
     - Use conversation history for continuity
     - If the answer is not found in the context, say:
-    "I don't know"
+    "This question does not appear related to the uploaded document.
+    Please delete the uploaded document to switch back to normal chat mode."
     - Do not hallucinate or make up information
     - Keep answers clear and concise
     """
