@@ -590,18 +590,14 @@ document.getElementById("newChatBtn").addEventListener("click", async () => {
 // load sidebar chat list
 async function loadSessions() {
 
-    const res = await fetch("/sessions");
-    const data = await res.json();
-
-    const chatHistory = document.getElementById("chatHistory");
+    const response = await fetch("/sessions");
+    const sessions = await response.json();
 
     chatHistory.innerHTML = "";
-
-    data.forEach(chat => {
-
+    sessions.forEach(session => {
         chatHistory.innerHTML += `
-            <div class="chat-item" onclick="openChat('${chat.session_id}')">
-                ${chat.title}
+            <div class="chat-item">
+                ${session.title}
             </div>
         `;
     });
