@@ -20,6 +20,9 @@ from reranker.reranker import Reranker
 from llm.hf_model import load_llm
 from pipelines.rag_pipelines import RAGPipeline
 
+# Import database file
+from database.db import *
+
 # Initialize Flask app
 app = Flask(__name__)
 
@@ -29,9 +32,6 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 # Global RAG pipeline (shared across requests)
 rag_pipeline = None
-
-# Chat memory (stores last few conversations)
-chat_sessions = {}
 
 # general chat model
 llm = None
@@ -151,24 +151,19 @@ def remove_doc():
 @app.route("/new-chat", methods = ['POST'])
 def new_chat():
 
-    global chat_sessions, app_state
+    global app_state
 
     data = request.get_json(silent=True) or {}
     old_id = data.get("session_id")
     llm = init_llm()
 
-    # finalize old chat title
-    if old_id in chat_sessions:
-        finalize_title(chat_sessions[old_id], llm)
+    # finalize previous old chat title
+    if old_id:
+        finalize_title(old_id, llm)
 
-    new_id = str(uuid.uuid4())
+    # Create new DB session
+    new_id = create_session()
 
-    chat_sessions[new_id] = {
-        "title": "New Chat",
-        "messages": [],
-        "mode": app_state["mode"],
-        "title_generated": False
-    }
     return jsonify({
         "session_id": new_id,
         "title": "New Chat"
@@ -194,14 +189,13 @@ def ask():
     if not query:
         return jsonify({"error": "Empty query"}), 400
     
-    # Get session 
-    session = chat_sessions.get(session_id)
-    if not session:
+    # Validate session from database
+    if not session_exists(session_id):
         return jsonify({
             'error':'Invalid session'
         }), 400
     
-    chat_history = session['messages']
+    chat_history = get_session_messages(session_id)
     
     def generate():
         """Streaming generator for Flask response.
@@ -239,70 +233,84 @@ def ask():
             yield f"\n[ERROR]: {str(e)}"
 
         # Save message to session
-        chat_history.append({
-            "role":"user",
-            "content":query
-        })
+        save_message(
+            session_id=session_id,
+            role='user',
+            content=query
+        )
 
-        chat_history.append({
-            "role":'assistant',
-            "content": full_answer
-        })
-        # keep last 5 exchanges(10 messages)
-        session['messages'] = chat_history[-10:]
+        save_message(
+            session_id=session_id,
+            role="assistant",
+            content=full_answer
+        )
 
         # Title generation logic
+        messages = get_session_messages(session_id)
 
-        llm = init_llm()
-        # if chat is still short -> wait
-        if len(session['messages']) < 6:
-            pass
-        
-        # if enough messages -> generate title once
-        elif not session.get("title_generated", False):
-            
-            title = generate_chat_title(llm, session['messages'])
-            session['title'] = title
-            session['title_generated'] = True
+        # Only generate title if there is enough messages
 
+        if len(messages) >= 4:
+            conn = get_connection()
+            cursor = conn.cursor()
+            cursor.execute("SELECT title FROM chat_sessions WHERE id = ?", (session_id,))
+            row = cursor.fetchone()
+            current_title = row['title'] if row else None
+            if not current_title or current_title == "New Chat":
+                llm = init_llm()
+                title = generate_chat_title(llm,messages)
+                update_session_title(session_id, title)
     return Response(
         generate(), 
         mimetype="text/plain")
 
-# Get sidebar chat list
-@app.route("/sessions", methods = ["GET"])
-def get_sessions():
-    return jsonify([
+# Get side bar chat list
+@app.route("/sessions", methods = ['GET'])
+def sessions():
+    """API to Load sessions
+    """
+    sessions = get_all_sessions()
+    formatted = [
         {
-            "session_id": sid,
-            "title": data['title']
+            "session_id": s['id'],
+            "title": s['title']
         }
-        for sid, data in chat_sessions.items()
-        if len(data['messages']) > 0
-    ])
+        for s in sessions
+    ]
+    return jsonify(formatted)
 
 # Load specific chat
 @app.route("/session/<session_id>", methods = ['GET'])
 def load_session(session_id):
-    session = chat_sessions.get(session_id)
+    session = get_session(session_id)
     if not session:
         return jsonify({
             "error": "not found"
         }), 404
-    return jsonify(session)
+    
+    messages = get_session_messages(session_id)
+    return jsonify({
+        "session": session,
+        "messages": messages
+    })
 
 # if user leaves early
 @app.route("/close-session", methods = ['POST'])
 def close_session():
     session_id = request.json.get('session_id')
 
-    if session_id in chat_sessions:
+    if session_exists(session_id):
         llm = init_llm()
-        finalize_title(chat_sessions[session_id], llm)
 
-    return jsonify({'status': "ok"})
-
+        finalize_title(
+            session_id,
+            llm
+        )
+    return jsonify({
+        "status":"ok"
+    })
 
 # Run App
 if __name__ == "__main__":
+    init_db()
     app.run(debug = True, use_reloader = False)
