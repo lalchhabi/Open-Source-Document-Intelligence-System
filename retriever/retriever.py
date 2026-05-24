@@ -1,6 +1,7 @@
 ### Import libraries
 from langchain_community.retrievers import BM25Retriever
 from langchain_community.vectorstores import FAISS
+from langsmith import traceable
 
 class HybridRetriever:
     """
@@ -53,6 +54,8 @@ class HybridRetriever:
         )
         self.sparse_retriever.k = self.top_k
 
+    
+    @traceable(name="hybrid_retriever", run_type="chain")
     def retrieve(self, query, dense_weight=0.7, sparse_weight=0.3):
         """
         Combine dense and sparse retrievers into a hybrid retriever.
