@@ -1,5 +1,6 @@
 ### Import libraries
 from sentence_transformers import CrossEncoder
+from langsmith import traceable
 
 class Reranker:
     """
@@ -13,6 +14,7 @@ class Reranker:
 
         self.model = CrossEncoder(model_name)
 
+    @traceable(name="cross_encoder_reranker", run_type="chain")
     def rerank(self, query, documents, top_k=3):
         """
         Rerank retrieved documents.
