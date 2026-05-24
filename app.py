@@ -272,7 +272,7 @@ def sessions():
     sessions = get_all_sessions()
     formatted = [
         {
-            "session_id": s['id'],
+            "id": s['id'],
             "title": s['title']
         }
         for s in sessions
@@ -292,6 +292,17 @@ def load_session(session_id):
     return jsonify({
         "session": session,
         "messages": messages
+    })
+
+# delete specific chat
+@app.route("/session/<session_id>", methods = ["DELETE"])
+
+def delete_chat(session_id):
+
+    delete_session(session_id)
+    return jsonify({
+        "status":'deleted',
+        "session_id": session_id
     })
 
 # if user leaves early

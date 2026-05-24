@@ -228,6 +228,20 @@ body{
     background:#1d4ed8;
 }
 
+.chat-item{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:10px;
+}
+
+.delete-btn{
+    background:none;
+    border:none;
+    cursor:pointer;
+    color:white;
+}
+
 /* ================= FILE INFO ================= */
 
 .file-info{
@@ -382,6 +396,7 @@ body{
 </div>
 
 <script>
+console.log("🔥 SCRIPT IS RUNNING");
 
 /* ================= ELEMENTS ================= */
 let currentSessionId = null;
@@ -396,10 +411,15 @@ const queryInput = document.getElementById("queryInput");
 const chatArea = document.getElementById("chatArea");
 const welcomeScreen = document.getElementById("welcomeScreen");
 
+const chatHistory = document.getElementById("chatHistory");
+
 const newChatBtn = document.getElementById("newChatBtn");
 
-/* ================= UPLOAD ================= */
+document.addEventListener("click", () => {
+    console.log("ANY CLICK DETECTED");
+});
 
+/* ================= UPLOAD ================= */
 uploadBtn.addEventListener("click", () => {
     pdfFile.click();
 });
@@ -559,7 +579,15 @@ async function sendMessage() {
 
 /* ================= NEW CHAT ================= */
 
-newChatBtn.addEventListener("click", () => {
+newChatBtn.addEventListener("click", async () => {
+
+    const res = await fetch("/new-chat", {
+        method: "POST"
+    });
+
+    const data = await res.json();
+
+    currentSessionId = data.session_id;
 
     chatArea.innerHTML = `
         <div class="welcome" id="welcomeScreen">
@@ -567,25 +595,9 @@ newChatBtn.addEventListener("click", () => {
             <p>Upload a document and ask intelligent questions</p>
         </div>
     `;
-
+    loadSessions();
 });
 
-// connect to new chat button
-document.getElementById("newChatBtn").addEventListener("click", async () => {
-
-    const res = await fetch("/new-chat", {
-        method: "POST"
-    });
-
-    const data = await res.json();
-    console.log("SESSION CREATED:", data.session_id);
-
-    currentSessionId = data.session_id;
-
-    // clear chat UI
-    chatArea.innerHTML = "";
-
-});
 
 // load sidebar chat list
 async function loadSessions() {
@@ -594,13 +606,42 @@ async function loadSessions() {
     const sessions = await response.json();
 
     chatHistory.innerHTML = "";
+
     sessions.forEach(session => {
+
         chatHistory.innerHTML += `
-            <div class="chat-item">
-                ${session.title}
+            <div class="chat-item" id="session-${session.id}">
+
+                <span onclick="openChat('${session.id}')">
+                    ${session.title}
+                </span>
+
+                <button 
+                    class="delete-btn"
+                    onclick="deleteSession('${session.id}')">
+                    🗑
+                </button>
+
             </div>
         `;
     });
+}
+
+// function to delete session 
+async function deleteSession(sessionId) {
+
+    await fetch(`/session/${sessionId}`, {
+        method: "DELETE"
+    });
+
+    // remove instantly from UI
+    const sessionElement = document.getElementById(
+        `session-${sessionId}`
+    );
+
+    if (sessionElement) {
+        sessionElement.remove();
+    }
 }
 
 // open existing chat

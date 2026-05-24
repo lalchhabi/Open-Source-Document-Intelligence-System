@@ -4,3 +4,4 @@ test.py
 *.pdf
 task_to_do.txt
 *.env
+*.db

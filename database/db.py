@@ -190,3 +190,27 @@ def get_session(session_id):
     conn.close()
 
     return dict(session) if session else None
+
+def delete_session(session_id:int)->None:
+    """Function that delete the specific selected session
+
+    Args:
+        session_id (int): Unique session identity number
+    """
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    # delete messages first (important due to foreign relation logic)
+    cursor.execute("""
+        DELETE FROM messages
+        WHERE session_id = ?
+    """,(session_id,))
+
+    # delete session
+    cursor.execute("""
+    DELETE FROM chat_sessions
+    WHERE id = ?
+    """, (session_id,))
+
+    conn.commit()
+    conn.close()
