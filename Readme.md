@@ -1,232 +1,521 @@
-# 📄 Document Intelligence System (RAG-Based)
+# 📄 Open-Source Document Intelligence System
 
-An end-to-end **Retrieval-Augmented Generation (RAG)** system that allows users to upload documents (PDFs) and ask intelligent, context-aware questions using a local LLM.
+An AI-powered hybrid chat and Retrieval-Augmented Generation (RAG) system built with Flask, LangChain, FAISS, and Large Language Models.
 
----
+This project enables users to:
 
-## 🚀 Features
-
-- 📂 Upload PDF documents
-- ✂️ Smart text chunking with overlap
-- 🧠 Semantic search using embeddings (FAISS)
-- 🤖 LLM-powered answer generation
-- 💬 Context-aware multi-turn conversation
-- 📊 Source-based answers (with page references)
-- 🌐 Clean Flask-based web UI
-- ⚡ Real-time processing with progress bar
+* Upload PDF documents
+* Ask document-specific questions using RAG
+* Use normal conversational AI chat without documents
+* Maintain multi-session chat history
+* Persist chats using SQLite
+* Stream AI responses in real time
+* Switch intelligently between normal chat mode and RAG mode
 
 ---
 
-## 🧠 System Architecture
+# 🚀 Features
 
-```
+## ✅ Hybrid Chat System
 
-User Query
-↓
-Retriever (FAISS Vector Search)
-↓
-Top-K Relevant Chunks
-↓
-Prompt Builder (Context + Chat History)
-↓
-LLM (Gemma 2B - HuggingFace)
-↓
-Final Answer
+The application supports two intelligent modes:
 
+### 1. Normal Chat Mode
+
+* Direct LLM interaction
+* General-purpose AI assistant
+* No document retrieval required
+
+### 2. RAG Mode
+
+* Upload PDF documents
+* Semantic retrieval from uploaded files
+* Context-aware answers grounded in documents
+* Hybrid dense + sparse retrieval pipeline
+
+---
+
+# 🧠 Core Implementations
+
+## 📌 Retrieval-Augmented Generation (RAG)
+
+The system uses a complete RAG pipeline:
+
+1. PDF loading
+2. Text cleaning
+3. Chunking
+4. Embedding generation
+5. Vector storage
+6. Hybrid retrieval
+7. Reranking
+8. Prompt construction
+9. LLM response generation
+10. Streaming response delivery
+
+---
+
+# ⚡ Current Functionalities
+
+## ✅ PDF Upload System
+
+* Upload PDF documents from frontend
+* Automatic ingestion pipeline
+* Document processing status updates
+
+## ✅ Intelligent Chunking
+
+Uses recursive text splitting for better semantic retrieval.
+
+## ✅ Embedding Pipeline
+
+Converts document chunks into vector embeddings for semantic search.
+
+## ✅ FAISS Vector Database
+
+Stores dense embeddings for fast similarity retrieval.
+
+## ✅ Hybrid Retriever
+
+Combines:
+
+* Dense vector retrieval
+* Sparse keyword retrieval
+
+This improves factual accuracy and retrieval quality.
+
+## ✅ Reranking Layer
+
+Retrieved chunks are scored again using a Cross-Encoder
+reranker to improve contextual relevance and reduce noisy retrievals.
+
+## ✅ Streaming Responses
+
+Responses are streamed token-by-token using Flask streaming.
+
+## ✅ Context-Aware Conversations
+
+Maintains short-term conversation memory during sessions.
+
+## ✅ Multi-Session Chat System
+
+* Create multiple chats
+* Sidebar chat history
+* Session switching
+* Persistent chat storage
+
+## ✅ SQLite Persistence
+
+Stores:
+
+* Chat sessions
+* Chat titles
+* User messages
+* Assistant messages
+
+## ✅ Dynamic Chat Title Generation
+
+Chat titles are generated intelligently based on conversation context.
+
+## ✅ Delete Chat Sessions
+
+Users can delete individual chat sessions directly from sidebar.
+
+## ✅ Document Remove System
+
+Switch back from RAG mode to normal chat mode dynamically.
+
+---
+
+# 🏗️ System Architecture
+
+```text
+                ┌────────────────────┐
+                │   User Interface   │
+                │ HTML / CSS / JS    │
+                └─────────┬──────────┘
+                          │
+                          ▼
+                ┌────────────────────┐
+                │    Flask Backend   │
+                └─────────┬──────────┘
+                          │
+        ┌─────────────────┼──────────────────┐
+        ▼                                    ▼
+┌────────────────┐                 ┌────────────────┐
+│   Normal Chat  │                 │    RAG Mode    │
+│      LLM       │                 │ PDF + Retriever│
+└────────────────┘                 └───────┬────────┘
+                                           │
+                              ┌────────────┴───────────┐
+                              ▼                        ▼
+                    ┌──────────────────┐ ┌──────────────────┐
+                    │ Dense Retrieval  │ │Sparse Retrieval  │
+                    └─────────┬────────┘ └─────────┬────────┘                                     
+                              └────────────┬───────────┘
+                                           ▼
+                                 ┌──────────────────┐
+                                 │    Reranker      │
+                                 └─────────┬────────┘
+                                           ▼
+                                 ┌──────────────────┐
+                                 │       LLM        │
+                                 └─────────┬────────┘
+                                           ▼
+                                 ┌──────────────────┐
+                                 │ Streamed Response│
+                                 └──────────────────┘
 ```
 
 ---
 
-## 🏗️ Project Structure
+# 🛠️ Tech Stack
 
-```
+## Backend
 
-Document-Intelligence/
+* Python
+* Flask
+* LangChain
+* SQLite
+
+## AI / NLP
+
+* HuggingFace Transformers
+* SentenceTransformers
+* Retrieval-Augmented Generation (RAG)
+* Hybrid Search
+* Cross Encoder Reranking
+
+## Vector Database
+
+* FAISS
+
+## Frontend
+
+* HTML
+* CSS
+* Vanilla JavaScript
+
+## LLM Integration
+
+* HuggingFace Inference
+* Groq API (optional support)
+
+---
+
+# 📂 Project Structure
+
+```text
+Document_Intelligence_System/
 │
-├── app.py                  # Flask application
+├── app.py
+├── main.py
+├── requirements.txt
+├── .env
+├── .gitignore
+├── Readme.md
 │
-├── ingestion/
-│   └── loader.py          # PDF loading & extraction
-│
-├── chunking/
-│   └── chunker.py         # Text chunking logic
-│
-├── embeddings/
-│   ├── embedder.py        # Embedding model
-│   └── vector_store.py    # FAISS vector DB
-│
-├── retriever/
-│   └── retriever.py       # Semantic retrieval
-│
-├── pipelines/
-│   └── rag_pipelines.py   # RAG pipeline orchestration
-│
-├── llm/
-│   ├── hf_model.py        # Model loading
-│   ├── generator.py       # Answer generation
-│   └── prompt_build.py    # Prompt engineering
+├── database/
+│   ├── chatbot.db
+│   └── db.py
 │
 ├── templates/
-│   └── index.html         # Frontend UI
+│   └── index.html
 │
 ├── static/
-│   ├── style.css          # Styling
-│   └── script.js          # Frontend logic
+│   ├── css/
 │
-└── uploads/               # Uploaded PDFs
-
+├── uploads/
+│
+├── ingestion/
+│   └── loader.py
+│
+├── chunking/
+│   └── chunker.py
+│
+├── embeddings/
+│   └── embedder.py
+│   └── vector_store.py
+│
+├── retriever/
+│   └── retriever.py
+│
+├── reranker/
+│   └── reranker.py
+│
+├── llm/
+│   ├── hf_model.py
+│   └── prompt_build.py
+│
+├── pipelines/
+│   └── rag_pipeline.py
+│
+└── utils/
+    └── title_generator.py
+    └── text_cleaner.py
 ```
 
 ---
 
-## ⚙️ Tech Stack
+# 🔄 How the System Works
 
-- **Backend:** Flask  
-- **LLM:** HuggingFace (`google/gemma-2b-it`)  
-- **Embeddings:** SentenceTransformers (`bge-small-en`)  
-- **Vector DB:** FAISS  
-- **Frontend:** HTML, CSS, JavaScript  
-- **PDF Processing:** PyMuPDF (fitz)  
+## Step 1: Upload Document
+
+User uploads a PDF document.
+
+## Step 2: PDF Loading
+
+The PDF is parsed and converted into raw text.
+
+## Step 3: Chunking
+
+Large text is split into overlapping semantic chunks.
+
+## Step 4: Embedding Generation
+
+Chunks are converted into vector embeddings.
+
+## Step 5: Vector Storage
+
+Embeddings are stored inside FAISS.
+
+## Step 6: Hybrid Retrieval
+
+System retrieves relevant chunks using:
+
+* Dense semantic search
+* Sparse keyword search
+
+## Step 7: Cross-Encoder Reranking
+
+Retrieved chunks are scored again using a Cross-Encoder
+reranker to improve contextual relevance and reduce noisy retrievals.
+
+## Step 8: Prompt Construction
+
+Context + user query + chat history are combined.
+
+## Step 9: LLM Generation
+
+The LLM generates grounded responses.
+
+## Step 10: Streaming Response
+
+Response is streamed token-by-token to frontend.
 
 ---
 
-## 🔄 How It Works
+# 🧠 Context-Aware Chat System
 
-### 1. Document Ingestion
-- Upload PDF
-- Extract text from pages
-- Clean and preprocess text
+The chatbot supports conversational memory during sessions.
 
-### 2. Chunking
-- Split text into overlapping chunks
-- Improves retrieval accuracy
+Features:
 
-### 3. Embedding + Storage
-- Convert chunks → vector embeddings
-- Store in FAISS index
+* Maintains previous messages
+* Supports follow-up questions
+* Context-aware RAG responses
+* Multi-session persistence
 
-### 4. Retrieval
-- Convert query → embedding
-- Retrieve top-K relevant chunks
+Example:
 
-### 5. Prompt Construction
-- Combine:
-  - Retrieved context
-  - Chat history
-  - User query
-
-### 6. Answer Generation
-- Pass prompt to LLM
-- Generate contextual answer
-
----
-
-## 💬 Context-Aware Chat
-
-The system supports multi-turn conversations by maintaining:
-
+```text
+User: Summarize chapter 1
+User: Explain the second point more deeply
 ```
 
-chat_history = [
-{"user": "...", "assistant": "..."}
-]
-
-````
-
-Only the last few interactions are used to avoid token overflow.
+The system remembers earlier context.
 
 ---
 
-## ▶️ How to Run
+# 💾 Database Design
 
-### 1. Clone Repository
+## chat_sessions Table
+
+Stores:
+
+* session id
+* title
+* creation time
+
+## messages Table
+
+Stores:
+
+* session id
+* role (user/assistant)
+* message content
+* timestamps
+
+---
+
+# ▶️ How to Run the Project
+
+## 1. Clone Repository
 
 ```bash
-git clone https://github.com/lalchhabi/Open-Source-Document-Intelligence-System.git
-cd document-intelligence
-````
+git clone <repository_url>
+cd Document_Intelligence_System
+```
 
----
+## 2. Create Virtual Environment
 
-### 2. Install Dependencies
+```bash
+python -m venv rag_doc
+source rag_doc/bin/activate
+```
+
+## 3. Install Dependencies
 
 ```bash
 pip install -r requirements.txt
 ```
 
----
+## 4. Configure Environment Variables
 
-### 3. Run Application
+Create `.env` file:
+
+```env
+GROQ_API_KEY=your_key
+HUGGINGFACEHUB_API_TOKEN=your_key
+LANGCHAIN_API_KEY=your_key
+```
+
+## 5. Run Application
 
 ```bash
 python app.py
 ```
 
----
+## 6. Open Browser
 
-### 4. Open in Browser
-
-```
+```text
 http://127.0.0.1:5000
 ```
 
 ---
 
-## 📸 Demo Workflow
+# ⚠️ Current Limitations
 
-1. Upload a PDF
-2. Wait for processing
-3. Ask questions
-4. Get AI-generated answers with sources
-
----
-
-## ⚠️ Limitations
-
-* Uses global memory (not multi-user safe)
-* Model loading is heavy (can be optimized)
-* Limited to PDF input
-* No authentication system
+* Currently optimized mainly for PDF files
+* SQLite is suitable for small-to-medium scale projects only
+* Limited long-term memory
+* Single-user local deployment focus
+* No authentication system yet
+* No cloud deployment yet
+* Reranking can increase latency slightly
 
 ---
 
-## 🚀 Future Improvements
+# 🚀 Planned Future Improvements
 
-* ✅ Add user sessions (multi-user support)
-* ✅ Use faster embedding models
-* ✅ Add reranking (improve accuracy)
-* ✅ Stream responses (ChatGPT-like UI)
-* ✅ Deploy on cloud (AWS / GCP)
-* ✅ Add support for DOCX, TXT
-* ✅ Integrate evaluation metrics
+## 🔹 Authentication System
+
+* User login/signup
+* Personalized chat history
+
+## 🔹 Cloud Deployment
+
+* Docker
+* AWS/GCP/Azure deployment
+
+## 🔹 Advanced Vector Databases
+
+* Pinecone
+* Weaviate
+* ChromaDB
+
+## 🔹 Multi-Document Retrieval
+
+Query across multiple uploaded documents.
+
+## 🔹 Long-Term Memory
+
+Persistent semantic memory system.
+
+## 🔹 Advanced Agentic AI Workflow
+
+* Tool calling
+* Multi-agent orchestration
+* LangGraph workflows
+
+## 🔹 OCR Support
+
+Support scanned PDFs and images.
+
+## 🔹 Better UI/UX
+
+* Typing animation
+* Active session highlighting
+* Dark/light themes
+* Mobile responsiveness
+
+## 🔹 Production Monitoring
+
+* LangSmith tracing
+* Observability dashboards
+* Error monitoring
 
 ---
 
-## 📊 Evaluation (Planned)
+# 📊 Evaluation (Planned)
 
-* Retrieval accuracy (Top-K relevance)
-* Answer correctness
-* Latency (response time)
-* Hallucination rate
+Future evaluation metrics:
+
+* Retrieval accuracy
+* Context relevance
+* Hallucination reduction
+* Latency benchmarking
+* RAG response grounding
+* User experience testing
 
 ---
 
-## 🧠 Key Concepts Used
+# 📚 Key Concepts Used
 
 * Retrieval-Augmented Generation (RAG)
 * Semantic Search
-* Vector Databases (FAISS)
-* Prompt Engineering
-* Context-Aware Chat Systems
+* Hybrid Retrieval
+* Dense Retrieval
+* Sparse Retrieval
+* Vector Embeddings
+* Similarity Search
+* Reranking
+* Context-Aware Chat
+* Streaming Responses
+* Session Persistence
+* Conversational AI
+* LLM Prompt Engineering
 
 ---
 
-## 🙌 Author
+# 👨‍💻 Author
 
-**Chhabi Lal Tamang**
+## Chhabi Lal Tamang
+
+AI Engineer | NLP | Computer Vision | LLM Systems
+
+Focused on:
+
+* Agentic AI
+* Retrieval-Augmented Generation
+* LLM Applications
+* Deep Learning Systems
+* AI Product Engineering
 
 ---
 
-## ⭐ If you like this project
+# ⭐ Project Vision
 
-Give it a star ⭐ on GitHub and share it!
+The goal of this project is to build a production-style open-source AI document assistant capable of:
+
+* intelligent retrieval
+* conversational reasoning
+* scalable memory systems
+* real-world enterprise workflows
+
+while learning modern LLM engineering practices.
+
+---
+
+# 📜 License
+
+This project is open-source and available for educational and research purposes.
