@@ -1,6 +1,7 @@
 ### Import libraries
 from llm.prompt_build import build_prompt
 from reranker.reranker import Reranker
+from langsmith import traceable
 
 class RAGPipeline:
     """
@@ -35,6 +36,7 @@ class RAGPipeline:
         # Langchain Expression Language
         self.chain = self.prompt | self.llm
 
+    @traceable(name="rag_pipeline")
     def run(self, query, retrieve_k=10, top_k=5, chat_history=""):
         """
         Execute the full RAG pipeline.
