@@ -5,6 +5,7 @@ from llm.prompt_build import generate_chat_title
 from config.state import app_state
 import uuid
 from utils.title_generator import finalize_title
+from langsmith import traceable
 
 # Import RAG pipeline libraries
 from ingestion.loader import pdf_loader
@@ -197,6 +198,7 @@ def ask():
     
     chat_history = get_session_messages(session_id)
     
+    @traceable(name = "ask_endpoint")
     def generate():
         """Streaming generator for Flask response.
 

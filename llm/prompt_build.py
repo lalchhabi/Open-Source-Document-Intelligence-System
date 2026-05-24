@@ -1,6 +1,8 @@
 ### Import libraries
 from langchain_core.prompts import ChatPromptTemplate
+from langsmith import traceable
 
+@traceable(name = "prompt_builder")
 def build_prompt():
     """Create a Langchain prompt template for the RAG pipeline this prompt is responsible got guiding the LLM to generate context-aware response.
     """
