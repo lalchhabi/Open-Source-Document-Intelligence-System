@@ -124,6 +124,8 @@ Users can delete individual chat sessions directly from sidebar.
 
 Switch back from RAG mode to normal chat mode dynamically.
 
+## ✅ LangSmith observability and tracing support
+End-to-end RAG pipeline monitoring and Streaming response tracing
 ---
 
 # 🏗️ System Architecture
@@ -163,6 +165,10 @@ Switch back from RAG mode to normal chat mode dynamically.
                                            ▼
                                  ┌──────────────────┐
                                  │ Streamed Response│
+                                 └─────────┬────────┘
+                                           ▼
+                                 ┌──────────────────┐
+                                 │ LangSmith Tracing│
                                  └──────────────────┘
 ```
 
@@ -199,6 +205,9 @@ Switch back from RAG mode to normal chat mode dynamically.
 
 * HuggingFace Inference
 * Groq API (optional support)
+
+## Observability & Monitoring
+* LangSmith
 
 ---
 
@@ -301,6 +310,11 @@ The LLM generates grounded responses.
 ## Step 10: Streaming Response
 
 Response is streamed token-by-token to frontend.
+
+## Step 11: Tracing and Monitoring
+
+LangSmith traces and monitors the complete RAG workflow for observability and debugging.
+
 
 ---
 
@@ -448,12 +462,6 @@ Support scanned PDFs and images.
 * Dark/light themes
 * Mobile responsiveness
 
-## 🔹 Production Monitoring
-
-* LangSmith tracing
-* Observability dashboards
-* Error monitoring
-
 ---
 
 # 📊 Evaluation (Planned)
@@ -484,6 +492,7 @@ Future evaluation metrics:
 * Session Persistence
 * Conversational AI
 * LLM Prompt Engineering
+* Observability with LangSmith
 
 ---
 

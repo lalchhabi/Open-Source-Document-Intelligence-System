@@ -1,7 +1,27 @@
+# python cache
 **/__pycache__/
+.pyc
+
+# Virtual Environment 
 rag_doc/
+
+# test file and document (pdf)
 test.py
 *.pdf
 task_to_do.txt
+
+# Env file 
 *.env
+
+# Database file
 *.db
+
+# Pickle file
+*.pkl
+
+# Faiss index
+*.faiss
+faiss_index/
+
+# Json file
+*.json
