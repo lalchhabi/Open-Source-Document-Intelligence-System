@@ -5,7 +5,7 @@ def create_vector_store(documents, embeddings):
     """
     Create FAISS vector store using LangChain.
 
-    Parameters
+    Parameters                                                                        
     ----------
     documents : list
         Chunked documents (LangChain Document objects)
@@ -22,5 +22,8 @@ def create_vector_store(documents, embeddings):
         documents=documents,
         embedding=embeddings
     )
+
+    # Save locally
+    vector_store.save_local("embeddings/faiss_index")
 
     return vector_store

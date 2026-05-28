@@ -124,6 +124,8 @@ Users can delete individual chat sessions directly from sidebar.
 
 Switch back from RAG mode to normal chat mode dynamically.
 
+## ✅ LangSmith observability and tracing support
+End-to-end RAG pipeline monitoring and Streaming response tracing
 ---
 
 # 🏗️ System Architecture
@@ -163,6 +165,10 @@ Switch back from RAG mode to normal chat mode dynamically.
                                            ▼
                                  ┌──────────────────┐
                                  │ Streamed Response│
+                                 └─────────┬────────┘
+                                           ▼
+                                 ┌──────────────────┐
+                                 │ LangSmith Tracing│
                                  └──────────────────┘
 ```
 
@@ -200,6 +206,9 @@ Switch back from RAG mode to normal chat mode dynamically.
 * HuggingFace Inference
 * Groq API (optional support)
 
+## Observability & Monitoring
+* LangSmith
+
 ---
 
 # 📂 Project Structure
@@ -235,6 +244,11 @@ Document_Intelligence_System/
 ├── embeddings/
 │   └── embedder.py
 │   └── vector_store.py
+│ 
+├── evaluation/
+│    └── evaluation.py
+│    └── results.json
+│    └── sample_question.json
 │
 ├── retriever/
 │   └── retriever.py
@@ -252,6 +266,7 @@ Document_Intelligence_System/
 └── utils/
     └── title_generator.py
     └── text_cleaner.py
+    └── load_vector_store.py
 ```
 
 ---
@@ -302,6 +317,11 @@ The LLM generates grounded responses.
 
 Response is streamed token-by-token to frontend.
 
+## Step 11: Tracing and Monitoring
+
+LangSmith traces and monitors the complete RAG workflow for observability and debugging.
+
+
 ---
 
 # 🧠 Context-Aware Chat System
@@ -344,6 +364,209 @@ Stores:
 * role (user/assistant)
 * message content
 * timestamps
+
+---
+
+## 🧠 Models & Frameworks Used
+
+This system uses a combination of open-source LLMs and transformer-based models across embedding, retrieval, reranking, and generation stages.
+
+### 🔹 Main LLM (Response Generation)
+* **Model:** `meta-llama/Meta-Llama-3-8B-Instruct`
+* **Provider:** Hugging Face Inference API
+* **Task Type:** Conversational LLM
+* **Usage:** Final answer generation in RAG pipeline
+
+### 🔹 Embedding Model
+* **Model:** `BAAI/bge-small-en`
+* **Purpose:** Semantic embedding for document chunking and FAISS retrieval
+* **Output:** Dense vector representations for similarity search
+
+### 🔹 Reranker Model
+* **Model:** `BAAI/bge-reranker-base`
+* **Type:** Cross-Encoder Transformer
+* **Purpose:** Re-ranking retrieved chunks for better context relevance
+* **Role:** Improves precision before LLM generation
+
+### 🔹 Vector Database
+* **FAISS (Facebook AI Similarity Search)**
+  * Used for efficient similarity-based retrieval of document chunks.
+
+### 🔹 Frameworks & Libraries
+* **LangChain** → RAG pipeline orchestration
+* **Hugging Face Transformers** → LLM + embeddings + reranker
+* **Flask** → Backend API system
+* **RAGAS** → Evaluation framework
+* **LangSmith** → Tracing and observability
+
+# 📊 Evaluation 
+## Overview
+
+This project includes a fully automated evaluation pipeline using RAGAS (Retrieval-Augmented Generation Assessment) to measure the performance of the RAG system.
+
+The evaluation is designed to test:
+* Answer correctness
+* Retrieval quality
+* Context relevance
+* Faithfulness to source document
+
+---
+
+## Evaluation Pipeline Setup
+
+The evaluation system uses the same RAG pipeline used in production, ensuring realistic benchmarking.
+
+---
+
+## Dataset Format
+
+We use a structured JSON dataset:
+
+```json
+{
+  "question": "What is Retrieval-Augmented Generation?",
+  "ground_truth": "Retrieval-Augmented Generation combines retrieval and generation using external knowledge."
+}
+
+```
+
+---
+
+## Evaluation Workflow
+
+### For each question:
+
+* Load PDF document (Resume / Knowledge base)
+* Chunk documents using recursive text splitter
+* Generate embeddings using SentenceTransformers
+* Store vectors in FAISS
+* Retrieve relevant chunks using Hybrid Retriever
+* Generate answer using LLM
+
+### Collect:
+
+* User question
+* Model response
+* Retrieved contexts
+* Ground truth
+* Build evaluation dataset
+* Run RAGAS metrics evaluation
+
+---
+
+## Models Used in Evaluation
+
+### 🔹 LLM (Evaluator Model)
+
+* **Provider:** Groq API
+* **Model:** `qwen/qwen3-32b`
+* **Temperature:** 0
+* **Used for:**
+* Faithfulness evaluation
+* Answer relevancy scoring
+
+
+
+### 🔹 Embedding Model (RAGAS Evaluation)
+
+* **Model:** `sentence-transformers/all-MiniLM-L6-v2`
+* **Provider:** HuggingFace
+* **Used for:**
+* Context similarity measurement
+* Retrieval evaluation
+
+
+
+### 🔹 RAG Pipeline LLM (Answer Generation)
+
+* **Model:** Configurable HuggingFace / Groq model
+* **Used for:** Generating system responses for evaluation
+
+---
+
+## Metrics Used (RAGAS)
+
+1. **Faithfulness**
+* Checks if the answer is supported by retrieved context.
+* ✔ Detects hallucinations
+
+
+2. **Answer Relevancy**
+* Measures how relevant the answer is to the question.
+* ✔ Ensures correct response focus
+
+
+3. **Context Precision**
+* Measures how relevant retrieved chunks are.
+* ✔ Evaluates retrieval noise
+
+
+4. **Context Recall**
+* Measures whether all necessary information was retrieved.
+* ✔ Ensures completeness of retrieval
+
+---
+
+## Example Results
+
+| Metric | Score |
+| --- | --- |
+| **Faithfulness** | 1.00 |
+| **Answer Relevancy** | 0.93 |
+| **Context Precision** | 0.58 |
+| **Context Recall** | 1.00 |
+
+---
+
+## Output Storage
+
+Evaluation results are automatically saved as:
+`evaluation/results.json`
+
+**Stored Format:**
+
+```json
+{
+  "faithfulness": 1.0,
+  "answer_relevancy": 0.93,
+  "context_precision": 0.58,
+  "context_recall": 1.0
+}
+
+```
+
+---
+
+## Why We Use a Fixed Dataset
+
+RAG systems are probabilistic, so evaluation requires:
+
+* Same questions every run
+* Known ground truth answers
+* Stable benchmarking
+
+This ensures reproducibility and fair comparison.
+
+---
+
+## Tools Used
+
+* **RAGAS** → Evaluation framework
+* **Groq API** → LLM evaluator
+* **HuggingFace Transformers** → Embeddings + inference
+* **FAISS** → Vector database
+* **LangChain** → Pipeline orchestration
+
+---
+
+## Key Insight
+
+This evaluation pipeline ensures:
+
+* ✔ End-to-end RAG validation
+* ✔ Retrieval + generation quality measurement
+* ✔ Production-ready benchmarking system
+* ✔ Automated result tracking
 
 ---
 
@@ -448,26 +671,6 @@ Support scanned PDFs and images.
 * Dark/light themes
 * Mobile responsiveness
 
-## 🔹 Production Monitoring
-
-* LangSmith tracing
-* Observability dashboards
-* Error monitoring
-
----
-
-# 📊 Evaluation (Planned)
-
-Future evaluation metrics:
-
-* Retrieval accuracy
-* Context relevance
-* Hallucination reduction
-* Latency benchmarking
-* RAG response grounding
-* User experience testing
-
----
 
 # 📚 Key Concepts Used
 
@@ -484,6 +687,8 @@ Future evaluation metrics:
 * Session Persistence
 * Conversational AI
 * LLM Prompt Engineering
+* Observability with LangSmith
+* RAGAS for Evaluation
 
 ---
 
@@ -491,7 +696,7 @@ Future evaluation metrics:
 
 ## Chhabi Lal Tamang
 
-AI Engineer | NLP | Computer Vision | LLM Systems
+AI Engineer | LLM Systems | RAG | Computer Vision 
 
 Focused on:
 
