@@ -12,8 +12,6 @@ on:
   pull_request:
     branches: ["main"]
 
-
-
 # JOBS (what tasks to run)
 jobs:
   build:   # Job name
@@ -28,7 +26,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-
       # STEP 2: Setup Python environment in CI machine
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -36,19 +33,14 @@ jobs:
           python-version: "3.11"   # Python version used in CI
 
 
-      # STEP 3: Install project dependencies
+      # STEP 3: Install project dependencies, Upgrade pip (package manager) and Install all required packages from requirements.txt
       - name: Install dependencies
         run: |
-          # Upgrade pip (package manager)
           python -m pip install --upgrade pip
-
-          # Install all required packages from requirements.txt
           pip install -r requirements.txt
 
 
-      # STEP 4: Basic sanity check (quick test)
+      # STEP 4: Basic sanity check (quick test), Try importing important libraries and
       - name: Run basic import test
         run: |
-          # Try importing important libraries
-          # If any fails → CI fails automatically
           python -c "import flask, langchain; print('Imports OK')"
