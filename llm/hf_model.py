@@ -19,7 +19,8 @@ def load_llm():
         task = "conversational",
         temperature=0.3,
         huggingfacehub_api_token=HF_TOKEN,
-        streaming=True
+        streaming=True,
+        max_new_tokens=1024
         )
     
     model = ChatHuggingFace(llm = llm)

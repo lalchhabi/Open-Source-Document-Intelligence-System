@@ -1,0 +1,12 @@
+__pycache__/
+*.pyc
+*.pyo
+*.pkl
+*.faiss
+*.db
+venv/
+rag_doc/
+.env
+.git
+uploads/
+evaluation/results.json
