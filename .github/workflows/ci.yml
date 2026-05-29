@@ -1,30 +1,54 @@
+# Name of the workflow
 name: RAG System CI Pipeline
 
+# WHEN should this pipeline run?
 on:
+  # Run when code is pushed
   push:
-    branches: ["main", "ci-cd"]
+    # Only run for these branches
+    branches: ["main", "feat/ci-cd"]
+
+  # Run when a Pull Request is created to main branch
   pull_request:
     branches: ["main"]
 
 
+
+# JOBS (what tasks to run)
 jobs:
-  build:
+  build:   # Job name
+
+    # OS environment for CI runner
     runs-on: ubuntu-latest
 
+    # STEPS (executed one by one)
     steps:
+
+      # STEP 1: Download your repository code
       - name: Checkout code
         uses: actions/checkout@v4
 
+
+      # STEP 2: Setup Python environment in CI machine
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: "3.11"   # Python version used in CI
 
+
+      # STEP 3: Install project dependencies
       - name: Install dependencies
-        runs: |
+        run: |
+          # Upgrade pip (package manager)
           python -m pip install --upgrade pip
+
+          # Install all required packages from requirements.txt
           pip install -r requirements.txt
 
+
+      # STEP 4: Basic sanity check (quick test)
       - name: Run basic import test
-        run: | 
-          python -c "import flask , langchain; print('Imports OK')"
+        run: |
+          # Try importing important libraries
+          # If any fails → CI fails automatically
+          python -c "import flask, langchain; print('Imports OK')"
