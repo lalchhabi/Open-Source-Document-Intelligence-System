@@ -16,12 +16,14 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-# 5. Copy ONLY requirements first (better caching)
+# 5. Copy requirements 
 COPY requirements.txt .
+COPY requirements_ml.txt .
 
 # 6. Upgrade pip + install dependencies
 RUN pip install --upgrade pip && \
-    pip install -r requirements.txt
+    pip install -r requirements.txt && \
+    pip install -r requirements_ml.txt
 
 # 7. Copy application code
 COPY . .
