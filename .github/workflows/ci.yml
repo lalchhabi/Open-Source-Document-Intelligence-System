@@ -59,3 +59,12 @@ jobs:
       - name: Check running container
         run: |
           docker ps
+
+      # Step 8 # Wait for Flask startup
+      - name: Wait for application startup
+        run: sleep 15
+
+      # Step 9 # Check application response
+      - name: Test Flask endpoint
+        run: | 
+          curl http://localhost:5000
