@@ -40,7 +40,12 @@ jobs:
           pip install -r requirements.txt
 
 
-      # STEP 4: Basic sanity check (quick test), Try importing important libraries and
+      # STEP 4: Basic import test
       - name: Run basic import test
         run: |
           python -c "import flask, langchain; print('Imports OK')"
+
+      # STEP 5: Build Docker Image
+      - name: Build Docker Image
+        run: |
+          docker build -t rag-system .
