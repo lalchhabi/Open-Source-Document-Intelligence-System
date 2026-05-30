@@ -50,14 +50,12 @@ jobs:
         run: |
           docker build -t rag-system .
 
-      # STEP 6: Debug dependencies installatiom
-      - name: Debug pip
+      # Step 6: Run docker container test
+      - name: Run Docker container
         run: |
-          pip install -r requirements.txt --no-cache-dir --verbose
-
-      # # Step 6: Run docker container test
-      # - name: Run Docker container
-      #   run: |
-      #     docker run -d -p 5000:5000 --name rag-test rag-system
+          docker run -d --name rag-test -p 5000:5000 rag-system
       
-      # # Step 7
+      # Step 7 # Check running container
+      - name: Check running container
+        run: |
+          docker ps
