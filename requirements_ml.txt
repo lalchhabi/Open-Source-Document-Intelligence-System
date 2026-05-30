@@ -1,0 +1,19 @@
+cuda-bindings==13.2.0
+cuda-pathfinder==1.5.4
+cuda-toolkit==13.0.2
+datasets==4.8.5
+faiss-cpu==1.13.2
+hf-xet==1.5.0
+huggingface_hub==1.15.0
+nibabel==5.4.2
+nipype==1.11.0
+pyarrow==24.0.0
+ragas==0.4.3
+torch --index-url https://download.pytorch.org/whl/cpu
+tokenizers==0.22.2
+transformers==5.8.1
+safetensors==0.7.0
+scikit-learn==1.8.0
+scikit-network==0.33.5
+scipy==1.17.1
+sentence-transformers==5.5.0
