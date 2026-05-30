@@ -1,0 +1,70 @@
+# Name of the workflow
+name: RAG System CI Pipeline
+
+# WHEN should this pipeline run?
+on:
+  # Run when code is pushed
+  push:
+    # Only run for these branches
+    branches: ["main", "feat/ci-cd"]
+
+  # Run when a Pull Request is created to main branch
+  pull_request:
+    branches: ["main"]
+
+# JOBS (what tasks to run)
+jobs:
+  build:   # Job name
+
+    # OS environment for CI runner
+    runs-on: ubuntu-latest
+
+    # STEPS (executed one by one)
+    steps:
+
+      # STEP 1: Download your repository code
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # STEP 2: Setup Python environment in CI machine
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"   # Python version used in CI
+
+
+      # STEP 3: Install project dependencies, Upgrade pip (package manager) and Install all required packages from requirements.txt
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+
+      # STEP 4: Basic import test
+      - name: Run basic import test
+        run: |
+          python -c "import flask, langchain; print('Imports OK')"
+
+      # STEP 5: Build Docker Image
+      - name: Build Docker Image
+        run: |
+          docker build -t rag-system .
+
+      # Step 6: Run docker container test
+      - name: Run Docker container
+        run: |
+          docker run -d --name rag-test -p 5000:5000 rag-system
+      
+      # Step 7 # Check running container
+      - name: Check running container
+        run: |
+          docker ps
+
+      # Step 8 # Wait for Flask startup
+      - name: Wait for application startup
+        run: sleep 15
+
+      # Step 9 # Check application response
+      - name: Test Flask endpoint
+        run: | 
+          curl http://localhost:5000

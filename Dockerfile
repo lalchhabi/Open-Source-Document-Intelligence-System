@@ -1,36 +1,35 @@
-
-# Base Image
+# 1. Lightweight base image
 FROM python:3.11-slim
 
-# Set working directory
+# 2. Prevent Python buffering logs
+ENV PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1
+
+# 3. Set working directory
 WORKDIR /app
 
-# Install system dependencies because of C/C++ compilation
-# (important for ML / FAISS / numpy builds)
-
-RUN apt-get update && apt-get install -y \
+# 4. Install system dependencies (minimal)
+RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     gcc \
-    git \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy requirements first (for caching)
+# 5. Copy requirements 
 COPY requirements.txt .
+COPY requirements_ml.txt .
 
-# Install Python dependencies
-RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir -r requirements.txt
+# 6. Upgrade pip + install dependencies
+RUN pip install --upgrade pip && \
+    pip install -r requirements.txt && \
+    pip install -r requirements_ml.txt
 
-
-# Copy project files
+# 7. Copy application code
 COPY . .
 
-# Environment variables (optional default placeholders)
-# print logs immediately (without buffering)
-ENV PYTHONUNBUFFERED=1
-
-# Expose Flask port
+# 8. Expose Flask port
 EXPOSE 5000
 
-# Run the application
-CMD ["python", "app.py"]
+# 9. Run application
+CMD ["gunicorn", "-b", "0.0.0.0:5000","app:app"]
