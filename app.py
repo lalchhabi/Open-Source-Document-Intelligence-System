@@ -45,6 +45,34 @@ def init_llm():
 
     return llm
 
+def get_embedder_cached():
+    """Load Embeffding model with caching to avoid redundant loads.
+    """
+    if "embedder" not in app_state:
+        app_state["embedder"] = get_embedder()
+    return app_state["embedder"]
+
+def build_vector_store(documents):
+    """Build vector store for given documents using cached embedder.
+    """
+    embedder = get_embedder_cached()
+    return create_vector_store(documents, embedder)
+
+def build_rag_pipeline(documents):
+    """
+    Lazily builds RAG pipeline to avoid memory spike.
+    """
+    retriever = HybridRetriever(app_state["vector_store"])
+    retriever.build_sparse_retriever(documents)
+
+    llm = init_llm()
+
+    return RAGPipeline(
+        retriever=retriever,
+        llm=llm,
+        reranker=Reranker()
+    )
+
 # MAIN PAGE ROUTE
 @app.route("/", methods=["GET"])
 def index():
@@ -62,7 +90,7 @@ def index():
     return render_template("index.html")
 
 
-    # Upload Document (Enable RAG mode)
+# Upload Document (Enable RAG mode)
 @app.route("/upload", methods = ['POST'])
 def upload():
     """Upload document and build RAG pipeline.
@@ -77,9 +105,12 @@ def upload():
 
     file = request.files.get("pdf")
     if not file:
-        return jsonify({'status':'error', "msg":"No file uploaded"}),400
+        return jsonify({
+            'status':'error', 
+            "msg":"No file uploaded"
+        }),400
     
-    # Save file
+    # Step: 1 Save file
     path = os.path.join(UPLOAD_FOLDER, file.filename)
     file.save(path)
 
@@ -93,48 +124,32 @@ def upload():
         texts = [c.page_content for c in chunks]
         metadata = [c.metadata for c in chunks]
 
-        print("Embedding............")
-        embedder = get_embedder()
-
         documents =[
             Document(page_content=t, metadata=m)
             for t, m in zip(texts, metadata)
         ]
 
-        print("Vector Store............")
-        vector_store = create_vector_store(
-            documents,
-            embedder
-        )
+        # Step 2: Only Store data (No embeddings, no vector db, no LLM)
+        app_state["documents"] = documents
 
-        print("Hybrid Retriever........")
-        retriever = HybridRetriever(
-            vector_store=vector_store
-        )
-        retriever.build_sparse_retriever(documents)
-
-        print("LLM.............")
-        llm = init_llm()
-
-        print("RAG Pipeline......")
-        rag_pipeline = RAGPipeline(
-            retriever=retriever,
-            llm=llm,
-            reranker=Reranker()
-        )
-
-        # Implement Switch Mode here
-        app_state['mode'] = 'rag'
-        app_state['rag_pipeline'] = rag_pipeline
+        # reset pipeline state
+        app_state["vector_store"] = None
+        app_state["rag_pipeline"] = None
+        
+        # switch mode to pending
+        app_state["mode"] = "rag"
+        print("Upload complete. RAG will initialize on first query.")
 
         return jsonify({
-            "status": "success",
-            "mode": "rag",
-            "msg": "Document Uploaded Successfully. RAG mode enabled."
-        })
+            'status':'success', 
+            'mode':'rag',
+            "msg":"File uploaded successfully. RAG will initialize on first question."})
     
     except Exception as e:
-        return jsonify({"status":'error', 'msg':str(e)}), 500
+        return jsonify({
+            'status':'error',
+            "msg": str(e)
+        }), 500
     
 @app.route("/remove-doc", methods=["POST"])
 def remove_doc():
@@ -181,7 +196,7 @@ def ask():
     Response is streamed token-by-token using Server-Sent Streaming.
     """
 
-    global rag_pipeline, app_state
+    global app_state
 
     data = request.get_json()
     query = data.get("query", "")
@@ -197,7 +212,31 @@ def ask():
         }), 400
     
     chat_history = get_session_messages(session_id)
-    
+
+    # Lazy init RAG 
+    # Step 1: Ensure documents exist
+    mode = app_state.get("mode", "chat")
+
+    if mode == "rag":
+        documents = app_state.get("documents")
+
+        if not documents:
+            return jsonify({
+                "error": "No document uploaded. Please upload a PDF first."
+            }), 400
+
+        # Step 2: Build vector store only when needed
+        if app_state.get("vector_store") is None:  
+            print("Building vector store...") 
+            app_state["vector_store"] = build_vector_store(
+                documents
+            )
+
+        # Step 3: Build RAG pipeline only when needed
+        if app_state.get("rag_pipeline") is None:
+            print("Building RAG pipeline...")
+            app_state["rag_pipeline"] = build_rag_pipeline(documents)
+        
     @traceable(name = "ask_endpoint")
     def generate():
         """Streaming generator for Flask response.
@@ -211,9 +250,13 @@ def ask():
 
         try:
             # CASE 1: RAG MODE
-            if (app_state['mode'] == 'rag' and app_state['rag_pipeline'] is not None):
-                stream, sources = app_state['rag_pipeline'].stream(query=query,
-                chat_history=chat_history
+            if (app_state.get('mode') == 'rag' and app_state.get('rag_pipeline') is not None):
+
+                stream, sources = (
+                app_state['rag_pipeline'].stream(
+                    query=query,
+                    chat_history=chat_history
+                    )
                 )
                 
                 for chunk in stream:
@@ -255,10 +298,15 @@ def ask():
         if len(messages) >= 4:
             conn = get_connection()
             cursor = conn.cursor()
-            cursor.execute("SELECT title FROM chat_sessions WHERE id = ?", (session_id,))
+
+            cursor.execute("SELECT title FROM chat_sessions WHERE id = ?", (session_id,)
+            )
             row = cursor.fetchone()
-            current_title = row['title'] if row else None
-            if not current_title or current_title == "New Chat":
+
+            current_title = (
+                row['title'] if row else None
+            )
+            if (not current_title or current_title == "New Chat"):
                 llm = init_llm()
                 title = generate_chat_title(llm,messages)
                 update_session_title(session_id, title)
