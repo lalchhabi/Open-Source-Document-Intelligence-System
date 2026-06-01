@@ -2,7 +2,6 @@
 from flask import Flask, request, Response, render_template, jsonify
 import os
 from llm.prompt_build import generate_chat_title
-from config.state import app_state
 import uuid
 from utils.title_generator import finalize_title
 from langsmith import traceable
@@ -20,6 +19,8 @@ from reranker.reranker import Reranker
 
 from llm.hf_model import load_llm
 from pipelines.rag_pipelines import RAGPipeline
+from services.rag_service import RAGService
+from services.init_models import model_registry
 
 # Import database file
 from database.db import *
@@ -30,6 +31,9 @@ app = Flask(__name__)
 # Folder to store uploaded PDFs
 UPLOAD_FOLDER = "uploads"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
+# Intialize global RAG service
+rag_service = RAGService()
 
 # Global RAG pipeline (shared across requests)
 rag_pipeline = None
@@ -62,7 +66,7 @@ def index():
     return render_template("index.html")
 
 
-    # Upload Document (Enable RAG mode)
+# Upload Document (Enable RAG mode)
 @app.route("/upload", methods = ['POST'])
 def upload():
     """Upload document and build RAG pipeline.
@@ -72,8 +76,6 @@ def upload():
     - Chat history is reset
     - Pipeline becomes active for /ask endpoint
     """
-
-    global rag_pipeline, chat_history, app_mode
 
     file = request.files.get("pdf")
     if not file:
@@ -93,39 +95,23 @@ def upload():
         texts = [c.page_content for c in chunks]
         metadata = [c.metadata for c in chunks]
 
-        print("Embedding............")
-        embedder = get_embedder()
-
         documents =[
             Document(page_content=t, metadata=m)
             for t, m in zip(texts, metadata)
         ]
+        
+        # Load models from registry
+        embedder = model_registry.embedder
+        llm = model_registry.llm
+        reranker = model_registry.reranker
 
-        print("Vector Store............")
-        vector_store = create_vector_store(
-            documents,
-            embedder
-        )
-
-        print("Hybrid Retriever........")
-        retriever = HybridRetriever(
-            vector_store=vector_store
-        )
-        retriever.build_sparse_retriever(documents)
-
-        print("LLM.............")
-        llm = init_llm()
-
-        print("RAG Pipeline......")
-        rag_pipeline = RAGPipeline(
-            retriever=retriever,
+        print("Building RAG system ..")
+        rag_service.build(
+            documents=documents,
+            embeddings=embedder,
             llm=llm,
-            reranker=Reranker()
+            reranker=reranker
         )
-
-        # Implement Switch Mode here
-        app_state['mode'] = 'rag'
-        app_state['rag_pipeline'] = rag_pipeline
 
         return jsonify({
             "status": "success",
@@ -138,12 +124,9 @@ def upload():
     
 @app.route("/remove-doc", methods=["POST"])
 def remove_doc():
-    global rag_pipeline
 
-    rag_pipeline = None
-
-    app_state["mode"] = "chat"
-    app_state["rag_pipeline"] = None
+    rag_service.mode = "chat"
+    rag_service.pipeline = None
 
     return jsonify({"status": "switched to chat mode",
                     "msg":"Document removed. Normal chat mode enabled."})
@@ -151,8 +134,6 @@ def remove_doc():
 # Route for new chat
 @app.route("/new-chat", methods = ['POST'])
 def new_chat():
-
-    global app_state
 
     data = request.get_json(silent=True) or {}
     old_id = data.get("session_id")
@@ -181,8 +162,6 @@ def ask():
     Response is streamed token-by-token using Server-Sent Streaming.
     """
 
-    global rag_pipeline, app_state
-
     data = request.get_json()
     query = data.get("query", "")
     session_id = data.get("session_id")
@@ -197,6 +176,8 @@ def ask():
         }), 400
     
     chat_history = get_session_messages(session_id)
+
+    rag_pipeline = rag_service.get_pipeline()
     
     @traceable(name = "ask_endpoint")
     def generate():
@@ -210,11 +191,17 @@ def ask():
         full_answer = ""
 
         try:
+            print("\n========== DEBUG START ==========")
+            print("MODE:", rag_service.mode)
+            print("PIPELINE:", rag_pipeline)
+            print("============================\n")
+
             # CASE 1: RAG MODE
-            if (app_state['mode'] == 'rag' and app_state['rag_pipeline'] is not None):
-                stream, sources = app_state['rag_pipeline'].stream(query=query,
+            if (rag_service.mode == 'rag' and rag_pipeline is not None):
+                stream, sources = rag_pipeline.stream(query=query,
                 chat_history=chat_history
                 )
+                print("RAG MODE ACTIVE")
                 
                 for chunk in stream:
                     token = chunk.content
@@ -223,7 +210,8 @@ def ask():
 
             # Case 2: Normal Chat Mode
             else:
-                llm = init_llm()
+                print("NORMAL CHAT MODE")
+                llm = model_registry.llm
                 stream = llm.stream(query)
 
                 for chunk in stream:
@@ -252,14 +240,14 @@ def ask():
 
         # Only generate title if there is enough messages
 
-        if len(messages) >= 4:
+        if len(messages) >= 6:
             conn = get_connection()
             cursor = conn.cursor()
             cursor.execute("SELECT title FROM chat_sessions WHERE id = ?", (session_id,))
             row = cursor.fetchone()
             current_title = row['title'] if row else None
             if not current_title or current_title == "New Chat":
-                llm = init_llm()
+                llm = model_registry.llm
                 title = generate_chat_title(llm,messages)
                 update_session_title(session_id, title)
     return Response(
