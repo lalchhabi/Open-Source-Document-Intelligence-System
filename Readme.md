@@ -614,6 +614,28 @@ python app.py
 http://127.0.0.1:5000
 ```
 
+## 🐳 Docker Setup
+
+This project supports containerized execution using Docker.
+
+### Build Image
+docker build -t rag-app .
+
+### Run Container
+docker run -p 5000:5000 rag-app
+
+## ⚙️ CI/CD Pipeline
+
+This project includes a GitHub Actions CI pipeline.
+
+### Features:
+- Automatic build validation
+- Dependency installation check
+- Docker build verification
+- Code stability check on every push
+
+📌 Note: CD (deployment) is kept as future enhancement due to infrastructure limitations.
+
 ---
 
 # ⚠️ Current Limitations
@@ -623,7 +645,6 @@ http://127.0.0.1:5000
 * Limited long-term memory
 * Single-user local deployment focus
 * No authentication system yet
-* No cloud deployment yet
 * Reranking can increase latency slightly
 
 ---
