@@ -2,7 +2,7 @@
 from flask import Flask, request, Response, render_template, jsonify
 import os
 from llm.prompt_build import generate_chat_title
-import uuid
+import traceback
 from utils.title_generator import finalize_title
 from langsmith import traceable
 
@@ -103,9 +103,10 @@ def upload():
         # Load models from registry
         embedder = model_registry.embedder
         llm = model_registry.llm
-        reranker = model_registry.reranker
 
-        print("Building RAG system ..")
+        reranker = model_registry.reranker
+        print('Reranker created successfully')
+
         rag_service.build(
             documents=documents,
             embeddings=embedder,
