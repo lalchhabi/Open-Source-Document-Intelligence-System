@@ -27,10 +27,7 @@ class RAGService:
         self.retriever = HybridRetriever(self.vector_store)
         print("[ RAG SERVICE ] Sparse retriever...")
         self.retriever.build_sparse_retriever(documents)
-
         print("[ RAG SERVICE ] Creating reranker...")
-        print("RERANKER TYPE:", type(reranker))
-
 
         print("[ RAG SERVICE ] Building pipeline...")
         self.rag_pipeline = RAGPipeline(
