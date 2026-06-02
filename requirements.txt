@@ -92,6 +92,7 @@ python-dotenv==1.2.2
 pyxnat==1.6.4
 PyYAML==6.0.3
 rdflib==7.6.0
+rank_bm25
 regex==2026.5.9
 requests==2.34.2
 requests-toolbelt==1.0.0
