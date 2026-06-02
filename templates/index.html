@@ -430,7 +430,7 @@ pdfFile.addEventListener("change", () => {
 
     if(!file) return;
 
-    fileInfo.innerHTML = `📄 Wait file is Uploading...: ${file.name}`;
+    fileInfo.innerHTML = `📄 Wait file is Processing...: ${file.name}`;
 
     const formData = new FormData();
     formData.append("pdf", file);

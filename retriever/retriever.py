@@ -1,6 +1,7 @@
 ### Import libraries
 from langchain_community.retrievers import BM25Retriever
 from langchain_community.vectorstores import FAISS
+from langchain_core import documents
 from langsmith import traceable
 
 class HybridRetriever:
@@ -49,12 +50,17 @@ class HybridRetriever:
         """
         Create BM25 retriever from documents
         """
-        self.sparse_retriever = BM25Retriever.from_documents(
-            documents
-        )
-        self.sparse_retriever.k = self.top_k
+        try:
+            print("Documents count:", len(documents))
+            self.sparse_retriever = BM25Retriever.from_documents(
+                documents,
+            )
+            self.sparse_retriever.k = self.top_k
 
-    
+        except Exception as e:
+            print(f"[BM25] ERROR building sparse retriever: {e}")
+            raise e
+
     @traceable(name="hybrid_retriever", run_type="chain")
     def retrieve(self, query, dense_weight=0.7, sparse_weight=0.3):
         """

@@ -4,7 +4,9 @@ FROM python:3.11-slim
 # 2. Prevent Python buffering logs
 ENV PYTHONUNBUFFERED=1 \
     PIP_NO_CACHE_DIR=1 \
-    PIP_DISABLE_PIP_VERSION_CHECK=1
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    TOKENIZERS_PARALLELISM=false \
+    OMP_NUM_THREADS=1
 
 # 3. Set working directory
 WORKDIR /app
@@ -32,4 +34,4 @@ COPY . .
 EXPOSE 5000
 
 # 9. Run application
-CMD ["gunicorn", "-b", "0.0.0.0:5000","app:app"]
+CMD ["gunicorn", "-b", "0.0.0.0:5000", "app:app", "--workers", "1", "--timeout", "600", "--preload"]
