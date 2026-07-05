@@ -58,15 +58,22 @@ def generate_chat_title(llm, messages):
     )
 
     prompt = f"""
-    You are a chat title generator.
-    Create a short 3-6 word title for this conversation:
+    You are an AI that generates chat titles.
 
+    Based on the conversation below, generate ONE concise title.
+
+    Conversation:
     {conversation_text}
 
-    Rules:
-    - No punctuation
-    - No quotes
-    - Very concise
+    Requirements:
+    - 3 to 6 words only
+    - Output ONLY the title
+    - Do not explain
+    - Do not add introductory text
+    - Do not say "Here is the title"
+    - Do not use quotes
+    - Do not use punctuation
+    - Return exactly one line
     """
     response = llm.invoke(prompt)
     return response.content.strip()
