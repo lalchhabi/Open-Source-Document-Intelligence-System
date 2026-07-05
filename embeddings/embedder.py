@@ -1,15 +1,20 @@
 ### Import libraries
-from langchain_huggingface import HuggingFaceEmbeddings
+from langchain_community.embeddings import FastEmbedEmbeddings
+
+DEFAULT_EMBEDDING_MODEL = "BAAI/bge-small-en-v1.5"
+
 
 def get_embedder(
-    model_name = "BAAI/bge-small-en",
-    normalize = True,
-    device = None
+    model_name=DEFAULT_EMBEDDING_MODEL,
 ):
     """
-    Creates a LangChain-compatible embedding model.
+    Creates a LangChain-compatible FastEmbed embedding model.
 
-    This uses HuggingFaceEmbeddings wrapper which integrates directly with:
+    This implementation uses FastEmbed, an ONNX-based embedding library
+    optimized for fast CPU inference with a smaller runtime footprint
+    compared to the standard Hugging Face SentenceTransformers backend.
+
+    The returned embedding model integrates directly with:
     - FAISS
     - Chroma
     - LangChain retrievers
@@ -18,28 +23,18 @@ def get_embedder(
     Parameters
     ----------
     model_name : str
-        HuggingFace SentenceTransformer model name.
-
-    normalize : bool
-        Whether to normalize embeddings (important for cosine similarity search).
-
-    device : str or None
-        Device to run model on ("cpu", "cuda"). If None, auto-detects.
+        Name of the FastEmbed-compatible embedding model.
+        Defaults to "BAAI/bge-small-en-v1.5".
 
     Returns
     -------
-    HuggingFaceEmbeddings
-        LangChain embedding object ready for vector stores.
+    FastEmbedEmbeddings
+        LangChain-compatible embedding model ready for generating
+        document and query embeddings.
     """
-    model_kwargs = {}
-    if device:
-        model_kwargs['device'] = device
 
-    embeddings = HuggingFaceEmbeddings(
-        model_name = model_name,
-        model_kwargs = model_kwargs,
-        encode_kwargs = {
-            "normalize_embeddings": normalize
-        }
+    embeddings = FastEmbedEmbeddings(
+        model_name=model_name
     )
+
     return embeddings
