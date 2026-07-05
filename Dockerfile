@@ -13,8 +13,6 @@ WORKDIR /app
 
 # 4. Install system dependencies (minimal)
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential \
-    gcc \
     curl \
     && rm -rf /var/lib/apt/lists/*
 

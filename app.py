@@ -32,6 +32,9 @@ app = Flask(__name__)
 UPLOAD_FOLDER = "uploads"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
+# Initialize database
+init_db()
+
 # Intialize global RAG service
 rag_service = RAGService()
 
@@ -314,5 +317,4 @@ def close_session():
 
 # Run App
 if __name__ == "__main__":
-    init_db()
     app.run(debug = True, use_reloader = False, host="0.0.0.0", port=5000)

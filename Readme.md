@@ -14,119 +14,42 @@ This project enables users to:
 
 ---
 
-# 🚀 Features
+## 🚀 Features
 
-## ✅ Hybrid Chat System
+### 🤖 Dual Interaction Modes
+* **Normal Chat Mode:** For general-purpose conversations using an LLM.
+* **RAG Mode:** For document-grounded question answering after PDF upload.
+* **Seamless Switching:** Easily switch between chat mode and document mode without restarting the application.
 
-The application supports two intelligent modes:
+### 📄 Intelligent Document Processing
+* **PDF Ingestion:** Complete with automatic parsing.
+* **Recursive Document Chunking:** Optimized for semantic retrieval.
+* **Dense Vector Embedding Generation:** For capturing deep contextual meaning.
+* **FAISS Vector Indexing:** Ensures efficient and fast similarity search.
 
-### 1. Normal Chat Mode
+### 🔍 Hybrid Retrieval Pipeline
+* **Dense Semantic Retrieval:** Powered by vector embeddings.
+* **Sparse Keyword Retrieval:** Utilizes BM25 for precise keyword matching.
+* **Cross-Encoder Reranking:** Cross-Encoder reranking with BAAI/bge-reranker-base.
 
-* Direct LLM interaction
-* General-purpose AI assistant
-* No document retrieval required
+### 💬 Context-Aware Conversations
+* **Multi-Session Chat Support:** Keep track of different topics seamlessly.
+* **Conversation History:** Maintained continuously for natural follow-up questions.
+* **Automatic Chat Title Generation:** Dynamically named based on your conversation context.
+* **Persistent Chat History:** Safely backed up and stored using SQLite.
 
-### 2. RAG Mode
+### ⚡ Streaming AI Responses
+* **Token-by-Token Streaming:** Real-time response streaming for an improved, snappy user experience.
+* **Universal Support:** Works flawlessly in both Normal Chat and RAG modes.
 
-* Upload PDF documents
-* Semantic retrieval from uploaded files
-* Context-aware answers grounded in documents
-* Hybrid dense + sparse retrieval pipeline
+### 📊 Observability & Evaluation
+* **Pipeline Tracing:** End-to-end tracing and visibility powered by LangSmith.
+* **Built-in RAGAS Framework:** Evaluation metrics for measuring precise retrieval and generation quality.
 
----
-
-# 🧠 Core Implementations
-
-## 📌 Retrieval-Augmented Generation (RAG)
-
-The system uses a complete RAG pipeline:
-
-1. PDF loading
-2. Text cleaning
-3. Chunking
-4. Embedding generation
-5. Vector storage
-6. Hybrid retrieval
-7. Reranking
-8. Prompt construction
-9. LLM response generation
-10. Streaming response delivery
-
----
-
-# ⚡ Current Functionalities
-
-## ✅ PDF Upload System
-
-* Upload PDF documents from frontend
-* Automatic ingestion pipeline
-* Document processing status updates
-
-## ✅ Intelligent Chunking
-
-Uses recursive text splitting for better semantic retrieval.
-
-## ✅ Embedding Pipeline
-
-Converts document chunks into vector embeddings for semantic search.
-
-## ✅ FAISS Vector Database
-
-Stores dense embeddings for fast similarity retrieval.
-
-## ✅ Hybrid Retriever
-
-Combines:
-
-* Dense vector retrieval
-* Sparse keyword retrieval
-
-This improves factual accuracy and retrieval quality.
-
-## ✅ Reranking Layer
-
-Retrieved chunks are scored again using a Cross-Encoder
-reranker to improve contextual relevance and reduce noisy retrievals.
-
-## ✅ Streaming Responses
-
-Responses are streamed token-by-token using Flask streaming.
-
-## ✅ Context-Aware Conversations
-
-Maintains short-term conversation memory during sessions.
-
-## ✅ Multi-Session Chat System
-
-* Create multiple chats
-* Sidebar chat history
-* Session switching
-* Persistent chat storage
-
-## ✅ SQLite Persistence
-
-Stores:
-
-* Chat sessions
-* Chat titles
-* User messages
-* Assistant messages
-
-## ✅ Dynamic Chat Title Generation
-
-Chat titles are generated intelligently based on conversation context.
-
-## ✅ Delete Chat Sessions
-
-Users can delete individual chat sessions directly from sidebar.
-
-## ✅ Document Remove System
-
-Switch back from RAG mode to normal chat mode dynamically.
-
-## ✅ LangSmith observability and tracing support
-End-to-end RAG pipeline monitoring and Streaming response tracing
----
+### 🐳 Deployment Ready
+* **Dockerized Application:** Containerized for easy environment management.
+* **Docker Compose Support:** Streamlined setup for quick local development.
+* **Render Deployment:** Tested and successfully deployed live on Render.
 
 # 🏗️ System Architecture
 
@@ -176,38 +99,42 @@ End-to-end RAG pipeline monitoring and Streaming response tracing
 
 # 🛠️ Tech Stack
 
+## Frontend
+- HTML
+- CSS
+- Vanilla JavaScript
+
 ## Backend
+- Python
+- Flask
+- LangChain
+- SQLite
 
-* Python
-* Flask
-* LangChain
-* SQLite
+## AI & LLM
+- Meta-Llama-3-8B-Instruct (Response Generation)
+- BAAI/bge-small-en (Embeddings)
+- BAAI/bge-reranker-base (Cross-Encoder Reranker)
 
-## AI / NLP
-
-* HuggingFace Transformers
-* SentenceTransformers
-* Retrieval-Augmented Generation (RAG)
-* Hybrid Search
-* Cross Encoder Reranking
+## RAG Pipeline
+- Retrieval-Augmented Generation (RAG)
+- Hybrid Retrieval (Dense + BM25)
+- Prompt Engineering
+- Streaming Responses
 
 ## Vector Database
+- FAISS
 
-* FAISS
+## Evaluation
+- RAGAS
+- Groq API (LLM Evaluator)
 
-## Frontend
+## Observability
+- LangSmith
 
-* HTML
-* CSS
-* Vanilla JavaScript
-
-## LLM Integration
-
-* HuggingFace Inference
-* Groq API (optional support)
-
-## Observability & Monitoring
-* LangSmith
+## Deployment
+- Docker
+- Docker Compose
+- Render
 
 ---
 
@@ -220,6 +147,7 @@ Document_Intelligence_System/
 ├── main.py
 ├── requirements.txt
 ├── requirements_ml.txt
+├── requirements_dev.txt
 ├── .env
 ├── .gitignore
 ├── Readme.md
@@ -274,83 +202,59 @@ Document_Intelligence_System/
 
 # 🔄 How the System Works
 
-## Step 1: Upload Document
+### 1. Start a Chat Session
+A new chat session is created and stored in SQLite. The system maintains conversation history and generates chat titles automatically.
 
-User uploads a PDF document.
+### 2. Choose Interaction Mode
+The application supports two modes:
 
-## Step 2: PDF Loading
+- **Normal Chat Mode:** Queries are sent directly to the LLM.
+- **RAG Mode:** Users upload a PDF, and responses are grounded in the document.
 
-The PDF is parsed and converted into raw text.
+### 3. Document Processing (RAG Mode)
+When a PDF is uploaded, the system:
 
-## Step 3: Chunking
+- Extracts text from the document
+- Cleans and preprocesses the content
+- Splits the text into semantic chunks
 
-Large text is split into overlapping semantic chunks.
+### 4. Embedding & Indexing
+Each chunk is converted into dense vector embeddings and indexed in FAISS for efficient semantic retrieval.
 
-## Step 4: Embedding Generation
+### 5. Hybrid Retrieval
+For every user query, the system retrieves relevant document chunks using:
 
-Chunks are converted into vector embeddings.
+- Dense semantic search (FAISS)
+- Sparse keyword search (BM25)
 
-## Step 5: Vector Storage
+### 6. Cross-Encoder Reranking
+Retrieved chunks are reranked using a Cross-Encoder model to improve context relevance before generation.
 
-Embeddings are stored inside FAISS.
+### 7. Prompt Construction
+The final prompt combines:
 
-## Step 6: Hybrid Retrieval
+- Conversation history
+- Retrieved document context
+- User query
 
-System retrieves relevant chunks using:
+This enables context-aware and grounded responses.
 
-* Dense semantic search
-* Sparse keyword search
+### 8. Response Generation
+The Meta-Llama-3-8B-Instruct model generates the final response using the constructed prompt.
 
-## Step 7: Cross-Encoder Reranking
+### 9. Streaming Response
+Responses are streamed token-by-token to provide a more responsive chat experience.
 
-Retrieved chunks are scored again using a Cross-Encoder
-reranker to improve contextual relevance and reduce noisy retrievals.
+### 10. Session Persistence
+User messages, assistant responses, and generated chat titles are stored in SQLite, enabling multi-session conversations.
 
-## Step 8: Prompt Construction
-
-Context + user query + chat history are combined.
-
-## Step 9: LLM Generation
-
-The LLM generates grounded responses.
-
-## Step 10: Streaming Response
-
-Response is streamed token-by-token to frontend.
-
-## Step 11: Tracing and Monitoring
-
-LangSmith traces and monitors the complete RAG workflow for observability and debugging.
-
-
----
-
-# 🧠 Context-Aware Chat System
-
-The chatbot supports conversational memory during sessions.
-
-Features:
-
-* Maintains previous messages
-* Supports follow-up questions
-* Context-aware RAG responses
-* Multi-session persistence
-
-Example:
-
-```text
-User: Summarize chapter 1
-User: Explain the second point more deeply
-```
-
-The system remembers earlier context.
-
+### 11. Observability
+LangSmith traces the end-to-end RAG pipeline for debugging, monitoring, and performance analysis.
 ---
 
 # 💾 Database Design
 
 ## chat_sessions Table
-
 Stores:
 
 * session id
@@ -358,7 +262,6 @@ Stores:
 * creation time
 
 ## messages Table
-
 Stores:
 
 * session id
@@ -368,163 +271,101 @@ Stores:
 
 ---
 
-## 🧠 Models & Frameworks Used
+# 🧠 AI Components
 
-This system uses a combination of open-source LLMs and transformer-based models across embedding, retrieval, reranking, and generation stages.
+The system combines multiple specialized AI models to build an end-to-end Retrieval-Augmented Generation (RAG) pipeline.
 
-### 🔹 Main LLM (Response Generation)
-* **Model:** `meta-llama/Meta-Llama-3-8B-Instruct`
-* **Provider:** Hugging Face Inference API
-* **Task Type:** Conversational LLM
-* **Usage:** Final answer generation in RAG pipeline
+| Component | Model | Purpose |
+|-----------|-------|---------|
+| Response Generation | `meta-llama/Meta-Llama-3-8B-Instruct` | Generates conversational responses using retrieved document context or general chat mode. |
+| Embedding Model | `BAAI/bge-small-en` | Converts document chunks into dense vector embeddings for semantic retrieval. |
+| Sparse Retrieval | `BM25` | Performs keyword-based retrieval to complement dense vector search. |
+| Reranker | `BAAI/bge-reranker-base` | Re-ranks retrieved documents using cross-encoder scoring before passing context to the LLM. |
+| Vector Store | `FAISS` | Stores embeddings and performs efficient similarity search. |
+| Evaluation LLM | `qwen/qwen3-32b` (Groq) | Used only for automated RAGAS evaluation metrics. |
 
-### 🔹 Embedding Model
-* **Model:** `BAAI/bge-small-en`
-* **Purpose:** Semantic embedding for document chunking and FAISS retrieval
-* **Output:** Dense vector representations for similarity search
+# 📊 Evaluation
 
-### 🔹 Reranker Model
-* **Model:** `BAAI/bge-reranker-base`
-* **Type:** Cross-Encoder Transformer
-* **Purpose:** Re-ranking retrieved chunks for better context relevance
-* **Role:** Improves precision before LLM generation
+This project includes an automated evaluation pipeline using **RAGAS (Retrieval-Augmented Generation Assessment)** to measure the quality of the production RAG system.
 
-### 🔹 Vector Database
-* **FAISS (Facebook AI Similarity Search)**
-  * Used for efficient similarity-based retrieval of document chunks.
+The evaluation focuses on:
 
-### 🔹 Frameworks & Libraries
-* **LangChain** → RAG pipeline orchestration
-* **Hugging Face Transformers** → LLM + embeddings + reranker
-* **Flask** → Backend API system
-* **RAGAS** → Evaluation framework
-* **LangSmith** → Tracing and observability
-
-# 📊 Evaluation 
-## Overview
-
-This project includes a fully automated evaluation pipeline using RAGAS (Retrieval-Augmented Generation Assessment) to measure the performance of the RAG system.
-
-The evaluation is designed to test:
-* Answer correctness
-* Retrieval quality
-* Context relevance
-* Faithfulness to source document
+- Answer correctness
+- Retrieval quality
+- Context relevance
+- Faithfulness to retrieved documents
 
 ---
 
-## Evaluation Pipeline Setup
+## Evaluation Workflow
 
-The evaluation system uses the same RAG pipeline used in production, ensuring realistic benchmarking.
+For each evaluation question, the system:
+
+1. Loads the reference document
+2. Builds the same production RAG pipeline
+3. Generates an answer using the LLM
+4. Collects the retrieved contexts and ground truth
+5. Evaluates the response using RAGAS metrics
 
 ---
 
-## Dataset Format
+## Evaluation Dataset
 
-We use a structured JSON dataset:
+The evaluation dataset consists of question and ground-truth answer pairs.
+
+Example:
 
 ```json
 {
   "question": "What is Retrieval-Augmented Generation?",
   "ground_truth": "Retrieval-Augmented Generation combines retrieval and generation using external knowledge."
 }
-
 ```
 
 ---
 
-## Evaluation Workflow
+## Evaluation Components
 
-### For each question:
-
-* Load PDF document (Resume / Knowledge base)
-* Chunk documents using recursive text splitter
-* Generate embeddings using SentenceTransformers
-* Store vectors in FAISS
-* Retrieve relevant chunks using Hybrid Retriever
-* Generate answer using LLM
-
-### Collect:
-
-* User question
-* Model response
-* Retrieved contexts
-* Ground truth
-* Build evaluation dataset
-* Run RAGAS metrics evaluation
+| Component | Model / Tool | Purpose |
+|-----------|--------------|---------|
+| **Evaluation Framework** | RAGAS | Measures retrieval and generation quality. |
+| **Evaluator LLM** | `qwen/qwen3-32b` (Groq) | Evaluates faithfulness and answer relevancy. |
+| **Embedding Model** | `sentence-transformers/all-MiniLM-L6-v2` | Computes embedding-based similarity metrics. |
+| **Answer Generation** | Production RAG Pipeline | Generates responses to be evaluated. |
 
 ---
 
-## Models Used in Evaluation
+## Evaluation Metrics
 
-### 🔹 LLM (Evaluator Model)
-
-* **Provider:** Groq API
-* **Model:** `qwen/qwen3-32b`
-* **Temperature:** 0
-* **Used for:**
-* Faithfulness evaluation
-* Answer relevancy scoring
-
-
-
-### 🔹 Embedding Model (RAGAS Evaluation)
-
-* **Model:** `sentence-transformers/all-MiniLM-L6-v2`
-* **Provider:** HuggingFace
-* **Used for:**
-* Context similarity measurement
-* Retrieval evaluation
-
-
-
-### 🔹 RAG Pipeline LLM (Answer Generation)
-
-* **Model:** Configurable HuggingFace / Groq model
-* **Used for:** Generating system responses for evaluation
-
----
-
-## Metrics Used (RAGAS)
-
-1. **Faithfulness**
-* Checks if the answer is supported by retrieved context.
-* ✔ Detects hallucinations
-
-
-2. **Answer Relevancy**
-* Measures how relevant the answer is to the question.
-* ✔ Ensures correct response focus
-
-
-3. **Context Precision**
-* Measures how relevant retrieved chunks are.
-* ✔ Evaluates retrieval noise
-
-
-4. **Context Recall**
-* Measures whether all necessary information was retrieved.
-* ✔ Ensures completeness of retrieval
+| Metric | Description |
+|---------|-------------|
+| **Faithfulness** | Measures whether the generated answer is supported by the retrieved context. |
+| **Answer Relevancy** | Measures how well the response answers the user's question. |
+| **Context Precision** | Evaluates whether retrieved chunks are relevant to the query. |
+| **Context Recall** | Measures whether all required information was successfully retrieved. |
 
 ---
 
 ## Example Results
 
 | Metric | Score |
-| --- | --- |
-| **Faithfulness** | 1.00 |
-| **Answer Relevancy** | 0.93 |
-| **Context Precision** | 0.58 |
-| **Context Recall** | 1.00 |
+|---------|------:|
+| Faithfulness | **1.00** |
+| Answer Relevancy | **0.93** |
+| Context Precision | **0.58** |
+| Context Recall | **1.00** |
 
 ---
 
-## Output Storage
+## Output
 
-Evaluation results are automatically saved as:
-`evaluation/results.json`
+Evaluation results are automatically saved to:
 
-**Stored Format:**
+```text
+evaluation/results.json
+```
+
+Example:
 
 ```json
 {
@@ -533,41 +374,7 @@ Evaluation results are automatically saved as:
   "context_precision": 0.58,
   "context_recall": 1.0
 }
-
 ```
-
----
-
-## Why We Use a Fixed Dataset
-
-RAG systems are probabilistic, so evaluation requires:
-
-* Same questions every run
-* Known ground truth answers
-* Stable benchmarking
-
-This ensures reproducibility and fair comparison.
-
----
-
-## Tools Used
-
-* **RAGAS** → Evaluation framework
-* **Groq API** → LLM evaluator
-* **HuggingFace Transformers** → Embeddings + inference
-* **FAISS** → Vector database
-* **LangChain** → Pipeline orchestration
-
----
-
-## Key Insight
-
-This evaluation pipeline ensures:
-
-* ✔ End-to-end RAG validation
-* ✔ Retrieval + generation quality measurement
-* ✔ Production-ready benchmarking system
-* ✔ Automated result tracking
 
 ---
 
@@ -576,7 +383,7 @@ This evaluation pipeline ensures:
 ## 1. Clone Repository
 
 ```bash
-git clone <repository_url>
+git clone <https://github.com/lalchhabi/Open-Source-Document-Intelligence-System/tree/feat/deploy-app>
 cd Document_Intelligence_System
 ```
 
@@ -591,6 +398,7 @@ source rag_doc/bin/activate
 
 ```bash
 pip install -r requirements.txt
+pip install -r requirements_ml.txt
 ```
 
 ## 4. Configure Environment Variables
@@ -601,6 +409,7 @@ Create `.env` file:
 GROQ_API_KEY=your_key
 HUGGINGFACEHUB_API_TOKEN=your_key
 LANGCHAIN_API_KEY=your_key
+COHERE_API_KEY=your_cohere_api_key
 ```
 
 ## 5. Run Application
@@ -615,131 +424,111 @@ python app.py
 http://127.0.0.1:5000
 ```
 
-## 🐳 Docker Setup
+# 🐳 Docker Setup
 
-This project supports containerized execution using Docker.
+The project can be run in an isolated container using Docker or Docker Compose.
 
-### Build Image
-docker build -t rag-app .
+### Build the Docker Image
 
-### Run Container
-docker run -p 5000:5000 rag-app
+```bash
+docker build -t document-intelligence-system .
+```
 
-## ⚙️ CI/CD Pipeline
+### Run the Container
 
-This project includes a GitHub Actions CI pipeline.
+```bash
+docker run -p 5000:5000 \
+  --env-file .env \
+  document-intelligence-system
+```
 
-### Features:
-- Automatic build validation
-- Dependency installation check
-- Docker build verification
-- Code stability check on every push
+### Run with Docker Compose
 
-📌 Note: CD (deployment) is kept as future enhancement due to infrastructure limitations.
+```bash
+docker compose up
+```
+
+The application will be available at:
+
+```text
+http://localhost:5000
+```
+
+---
+
+# ⚙️ CI/CD Pipeline
+
+This project includes a GitHub Actions workflow for continuous integration and is deployed using Render.
+
+### CI Features
+
+- Automatic dependency installation
+- Docker image build verification
+- Application startup validation
+- Build checks on every push and pull request
+
+### Deployment
+
+- Dockerized application
+- Automatic deployment from GitHub using Render
+- Containerized production environment
 
 ---
 
 # ⚠️ Current Limitations
 
-* Currently optimized mainly for PDF files
-* SQLite is suitable for small-to-medium scale projects only
-* Limited long-term memory
-* Single-user local deployment focus
-* No authentication system yet
-* Reranking can increase latency slightly
+- Optimized primarily for PDF documents.
+- SQLite is intended for development and small-scale deployments.
+- Uploaded documents are processed per session and are not persisted across deployments.
+- Large PDF files may exceed the memory limits of free cloud hosting services.
+- No user authentication or authorization system.
+- Cross-Encoder reranking improves retrieval quality but increases response latency.
 
 ---
 
-# 🚀 Planned Future Improvements
+# 🚀 Future Improvements
 
-## 🔹 Authentication System
+- **User Authentication**
+  - User registration and login
+  - Personalized chat history
 
-* User login/signup
-* Personalized chat history
+- **Persistent Vector Database**
+  - Replace in-memory FAISS with persistent vector databases such as Pinecone, Weaviate, or ChromaDB.
 
-## 🔹 Cloud Deployment
+- **Multi-Document Retrieval**
+  - Query across multiple uploaded documents simultaneously.
 
-* Docker
-* AWS/GCP/Azure deployment
+- **Long-Term Memory**
+  - Persistent conversational memory across sessions.
 
-## 🔹 Advanced Vector Databases
+- **OCR Support**
+  - Support scanned PDFs and image-based documents.
 
-* Pinecone
-* Weaviate
-* ChromaDB
+- **Advanced Agentic Workflows**
+  - Tool calling
+  - Multi-agent orchestration
+  - LangGraph-based workflows
 
-## 🔹 Multi-Document Retrieval
+- **Enhanced UI/UX**
+  - Typing indicators
+  - Mobile responsiveness
+  - Dark/Light theme
+  - Better document management
+  - Upload progress indicators
 
-Query across multiple uploaded documents.
+- **Production Infrastructure**
+  - PostgreSQL database
+  - Redis caching
+  - Scalable cloud deployment (AWS/GCP/Azure)
 
-## 🔹 Long-Term Memory
+## 👨‍💻 Author
 
-Persistent semantic memory system.
+**Chhabi Lal Tamang**
 
-## 🔹 Advanced Agentic AI Workflow
+AI Engineer passionate about building production-ready AI applications with Large Language Models, Retrieval-Augmented Generation (RAG), Computer Vision, and Deep Learning.
 
-* Tool calling
-* Multi-agent orchestration
-* LangGraph workflows
-
-## 🔹 OCR Support
-
-Support scanned PDFs and images.
-
-## 🔹 Better UI/UX
-
-* Typing animation
-* Active session highlighting
-* Dark/light themes
-* Mobile responsiveness
-
-
-# 📚 Key Concepts Used
-
-* Retrieval-Augmented Generation (RAG)
-* Semantic Search
-* Hybrid Retrieval
-* Dense Retrieval
-* Sparse Retrieval
-* Vector Embeddings
-* Similarity Search
-* Reranking
-* Context-Aware Chat
-* Streaming Responses
-* Session Persistence
-* Conversational AI
-* LLM Prompt Engineering
-* Observability with LangSmith
-* RAGAS for Evaluation
-
----
-
-# 👨‍💻 Author
-
-## Chhabi Lal Tamang
-
-AI Engineer | LLM Systems | RAG | Computer Vision 
-
-Focused on:
-
-* Agentic AI
-* Retrieval-Augmented Generation
-* LLM Applications
-* Deep Learning Systems
-* AI Product Engineering
-
----
-
-# ⭐ Project Vision
-
-The goal of this project is to build a production-style open-source AI document assistant capable of:
-
-* intelligent retrieval
-* conversational reasoning
-* scalable memory systems
-* real-world enterprise workflows
-
-while learning modern LLM engineering practices.
+- GitHub: https://github.com/lalchhabi
+- LinkedIn: https://www.linkedin.com/in/chhabi-lal-tamang-6a6b71222/
 
 ---
 
