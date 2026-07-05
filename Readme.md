@@ -219,6 +219,7 @@ Document_Intelligence_System/
 ├── app.py
 ├── main.py
 ├── requirements.txt
+├── requirements_ml.txt
 ├── .env
 ├── .gitignore
 ├── Readme.md
