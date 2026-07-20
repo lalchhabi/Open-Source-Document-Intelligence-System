@@ -9,7 +9,7 @@ load_dotenv()
 HF_TOKEN = os.getenv("HUGGINGFACEHUB_ACCESS_TOKEN")
 
 ### Load model name
-MODEL_NAME = 'meta-llama/Meta-Llama-3-8B-Instruct'
+MODEL_NAME = 'meta-llama/Llama-3.1-8B-Instruct'
 
 def load_llm():
     """Load Hugging Face LLM via Inference API
